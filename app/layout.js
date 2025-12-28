@@ -1,16 +1,21 @@
-import './globals.css'
+'use client';
 
-export const metadata = {
-  title: 'Next.js MongoDB Template',
-  description: 'A simple template with App Router, MongoDB, and shadcn/ui',
-}
+import { SessionProvider } from 'next-auth/react';
+import { Toaster } from '@/components/ui/sonner';
+import './globals.css';
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <title>WhatsApp Clone - Encrypted Messaging</title>
+      </head>
       <body>
-        {children}
+        <SessionProvider>
+          {children}
+          <Toaster />
+        </SessionProvider>
       </body>
     </html>
-  )
+  );
 }

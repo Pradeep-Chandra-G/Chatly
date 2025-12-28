@@ -1,45 +1,29 @@
-'use client'
+'use client';
 
-import { useEffect } from "react";
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import AuthPage from '@/components/AuthPage';
+import ChatLayout from '@/components/ChatLayout';
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await fetch('/api/');
-      const data = await response.json();
-      console.log(data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+export default function Home() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  if (status === 'loading') {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" alt="Emergent" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+  if (!session) {
+    return <AuthPage />;
+  }
 
-function App() {
-  return (
-    <div className="App">
-      <Home />
-    </div>
-  );
+  return <ChatLayout session={session} />;
 }
-
-export default App;
