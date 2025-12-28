@@ -378,6 +378,9 @@ export default function ChatLayout({ session }) {
               <Button variant="ghost" size="icon" onClick={() => setIsNewChatOpen(true)}>
                 <UserPlus className="w-5 h-5" />
               </Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsCreateGroupOpen(true)}>
+                <Users className="w-5 h-5" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={() => signOut()}>
                 <LogOut className="w-5 h-5" />
               </Button>
