@@ -29,20 +29,29 @@ export default function CallModal({
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
   const iceCandidatesQueue = useRef([]);
+  const isInitialized = useRef(false); // Prevent double initialization
 
   useEffect(() => {
-    if (!isOpen || !call) return;
+    if (!isOpen || !call || isInitialized.current) return;
 
     console.log('📞 Call modal opened', { call, isIncoming });
+    isInitialized.current = true;
 
     if (isIncoming) {
       setCallStatus('ringing');
     } else {
-      initiateCall();
+      // Delay call initiation slightly to ensure DOM is ready
+      const timer = setTimeout(() => {
+        initiateCall();
+      }, 100);
+      return () => clearTimeout(timer);
     }
 
     return () => {
-      cleanup();
+      if (isOpen) {
+        cleanup();
+        isInitialized.current = false;
+      }
     };
   }, [isOpen, call]);
 
