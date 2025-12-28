@@ -9,6 +9,8 @@ import MessageContextMenu from "@/components/MessageContextMenu";
 import ReplyPreview from "@/components/ReplyPreview";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import EditMessageDialog from "@/components/EditMessageDialog";
+import UserSettingsDialog from "@/components/UserSettingsDialog";
 import {
   MessageCircle,
   Send,
@@ -26,6 +28,7 @@ import {
   ArrowLeft,
   X,
   Reply,
+  Settings,
   Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -59,6 +62,9 @@ export default function ChatLayout({ session }) {
   const [contextMenu, setContextMenu] = useState(null);
   const [longPressTimer, setLongPressTimer] = useState(null);
   const [replyingTo, setReplyingTo] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Request notification permission
   useEffect(() => {
@@ -253,6 +259,15 @@ export default function ChatLayout({ session }) {
       console.log(`Message ${messageId} status: ${status}`);
       setMessages((prev) =>
         prev.map((msg) => (msg._id === messageId ? { ...msg, status } : msg))
+      );
+    });
+
+    socket.on("message:edited", ({ messageId, content, edited, editedAt }) => {
+      console.log("Message edited received:", messageId);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId ? { ...msg, content, edited, editedAt } : msg
+        )
       );
     });
 
@@ -581,6 +596,15 @@ export default function ChatLayout({ session }) {
               variant="ghost"
               size="icon"
               className="h-9 w-9"
+              onClick={() => setIsSettingsOpen(true)}
+              title="Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
               onClick={() => setIsNewChatOpen(true)}
             >
               <UserPlus className="w-5 h-5" />
@@ -829,9 +853,40 @@ export default function ChatLayout({ session }) {
   };
 
   const handleEditMessage = (message) => {
-    // This will be implemented in the next feature
-    console.log("Edit:", message);
-    toast.info("Edit feature coming next!");
+    // Only allow editing text messages
+    if (message.type !== "text") {
+      toast.error("Only text messages can be edited");
+      return;
+    }
+
+    // Only allow editing own messages
+    if (message.senderId !== session.user.id) {
+      toast.error("You can only edit your own messages");
+      return;
+    }
+
+    setEditingMessage(message);
+    setIsEditDialogOpen(true);
+    closeContextMenu();
+  };
+
+  // 5. ADD handleMessageEdited FUNCTION (new function)
+  const handleMessageEdited = (editedMessage) => {
+    // Update local state
+    setMessages((prev) =>
+      prev.map((msg) => (msg._id === editedMessage._id ? editedMessage : msg))
+    );
+
+    // Emit socket event to update for other users
+    if (socket && socket.connected) {
+      socket.emit("message:edit", {
+        messageId: editedMessage._id,
+        conversationId: selectedConversation._id,
+        content: editedMessage.content,
+        edited: editedMessage.edited,
+        editedAt: editedMessage.editedAt,
+      });
+    }
   };
 
   const handleDeleteMessage = (message) => {
@@ -1045,9 +1100,16 @@ export default function ChatLayout({ session }) {
                         )}
 
                         {message.content && (
-                          <p className="break-words text-sm sm:text-base">
-                            {message.content}
-                          </p>
+                          <div>
+                            <p className="break-words text-sm sm:text-base">
+                              {message.content}
+                            </p>
+                            {message.edited && (
+                              <p className="text-xs opacity-50 italic mt-1">
+                                (edited)
+                              </p>
+                            )}
+                          </div>
                         )}
 
                         <div className="flex items-center gap-1 justify-end mt-1">
@@ -1154,12 +1216,31 @@ export default function ChatLayout({ session }) {
         isOpen={isNewChatOpen}
         onClose={() => setIsNewChatOpen(false)}
         onConversationCreated={handleNewConversation}
+        currentUserId={session.user.id}
       />
 
       <CreateGroupDialog
         isOpen={isCreateGroupOpen}
         onClose={() => setIsCreateGroupOpen(false)}
         onGroupCreated={handleGroupCreated}
+      />
+
+      <UserSettingsDialog
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onProfileUpdated={() => {
+          loadConversations();
+        }}
+      />
+
+      <EditMessageDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setEditingMessage(null);
+        }}
+        message={editingMessage}
+        onMessageEdited={handleMessageEdited}
       />
 
       {activeCall && (

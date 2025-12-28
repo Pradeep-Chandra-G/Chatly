@@ -139,6 +139,21 @@ app.prepare().then(() => {
       });
     });
 
+    socket.on(
+      "message:edit",
+      ({ messageId, conversationId, content, edited, editedAt }) => {
+        console.log("Message edited:", messageId);
+
+        // Broadcast the edit to all users in the conversation
+        io.to(conversationId).emit("message:edited", {
+          messageId,
+          content,
+          edited,
+          editedAt,
+        });
+      }
+    );
+
     // WebRTC Signaling Events
     socket.on("call:initiate", ({ callId, receiverId, type, offer }) => {
       const receiverSocket = userSockets.get(receiverId);

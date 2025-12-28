@@ -15,7 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function NewChatDialog({ isOpen, onClose, onConversationCreated }) {
+export default function NewChatDialog({ isOpen, onClose, onConversationCreated, currentUserId }) {
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +43,10 @@ export default function NewChatDialog({ isOpen, onClose, onConversationCreated }
   };
 
   const handleCreateConversation = async (userId) => {
+    if (userId === currentUserId) {
+    toast.error("You cannot start a conversation with yourself");
+    return;
+  }
     setIsCreating(true);
     try {
       const response = await fetch('/api/conversations', {
