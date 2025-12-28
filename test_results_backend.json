@@ -1,103 +1,302 @@
 {
-  "total": 13,
-  "passed": 5,
-  "failed": 8,
+  "total": 27,
+  "passed": 9,
+  "failed": 18,
   "results": [
     {
       "test": "Basic Connectivity",
       "success": true,
       "message": "API is accessible - Hello World",
-      "timestamp": "2025-12-28T05:41:47.786388",
+      "timestamp": "2025-12-28T06:01:27.567626",
       "response_data": null
     },
     {
       "test": "User 1 Registration",
-      "success": true,
-      "message": "User 1 registered successfully",
-      "timestamp": "2025-12-28T05:41:48.166840",
-      "response_data": {
-        "message": "User created successfully",
-        "userId": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa"
-      }
+      "success": false,
+      "message": "Registration failed with status 400",
+      "timestamp": "2025-12-28T06:01:27.767881",
+      "response_data": "{\"error\":\"User already exists\"}"
     },
     {
       "test": "User 2 Registration",
+      "success": false,
+      "message": "Registration failed with status 400",
+      "timestamp": "2025-12-28T06:01:27.783396",
+      "response_data": "{\"error\":\"User already exists\"}"
+    },
+    {
+      "test": "Get CSRF Token",
       "success": true,
-      "message": "User 2 registered successfully",
-      "timestamp": "2025-12-28T05:41:48.257080",
-      "response_data": {
-        "message": "User created successfully",
-        "userId": "32d1906a-2bbc-434d-9337-aa3f885fdee9"
-      }
+      "message": "CSRF token retrieved successfully",
+      "timestamp": "2025-12-28T06:01:29.574526",
+      "response_data": null
     },
     {
       "test": "User Authentication",
+      "success": true,
+      "message": "Login successful with status 200",
+      "timestamp": "2025-12-28T06:01:29.767465",
+      "response_data": null
+    },
+    {
+      "test": "Session Cookies",
       "success": false,
-      "message": "Login failed with status 404",
-      "timestamp": "2025-12-28T05:41:57.565664",
-      "response_data": "<!DOCTYPE html><html lang=\"en\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/_next/static/css/app/layout.css?v=1766900517349\" data-precedence=\"next_static/css/app/layout.css\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/webpack.js?v=1766900517349\"/><script src=\"/_next/static/chunks/main-app.js?v=1766900517349\" async=\"\"></script><script src=\"/_next/static/chunks/app-pages-internals.js\" async=\"\"></script><script src=\"/_next/static/chunks/app/layout.js\" async=\"\"></script><meta name=\"robots\" content=\"noindex\"/><title>WhatsApp Clone - Encrypted Messaging</title><title>404: This page could not be found.</title><script src=\"/_next/static/chunks/polyfills.js\" noModule=\"\"></script></head><body><div style=\"font-family:system-ui,&quot;Segoe UI&quot;,Roboto,Helvetica,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI Emoji&quot;;height:100vh;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center\"><div><style>body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}</style><h1 class=\"next-error-h1\" style=\"display:inline-block;margin:0 20px 0 0;padding:0 23px 0 0;font-size:24px;font-weight:500;vertical-align:top;line-height:49px\">404</h1><div style=\"display:inline-block\"><h2 style=\"font-size:14px;font-weight:400;line-height:49px;margin:0\">This page could not be found.</h2></div></div></div><section aria-label=\"Notifications alt+T\" tabindex=\"-1\" aria-live=\"polite\" aria-relevant=\"additions text\" aria-atomic=\"false\"></section><script src=\"/_next/static/chunks/webpack.js?v=1766900517349\" async=\"\"></script><script>(self.__next_f=self.__next_f||[]).push([0]);self.__next_f.push([2,null])</script><script>self.__next_f.push([1,\"1:HL[\\\"/_next/static/css/app/layout.css?v=1766900517349\\\",\\\"style\\\"]\\n0:D{\\\"name\\\":\\\"rQ\\\",\\\"env\\\":\\\"Server\\\"}\\n\"])</script><script>self.__next_f.push([1,\"2:I[\\\"(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js\\\",[\\\"app-pages-internals\\\",\\\"static/chunks/app-pages-internals.js\\\"],\\\"\\\"]\\n5:I[\\\"(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js\\\",[\\\"app-pages-internals\\\",\\\"static/chunks/app-pages-internals.js\\\"],\\\"\\\"]\\n6:I[\\\"(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js\\\",[\\\"app-pages-internals\\\",\\\"static/chunks/app-pages-internals.js\\\"],\\\"\\\"]\\n7:I[\\\"(app-pages-browser)/./app/layout.js\\\",[\\\"app/layout\\\",\\\"static/chunks/app/layout.js\\\"],\\\"default\\\"]\\ne:I[\\\"(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js\\\",[\\\"app-pages-internals\\\",\\\"static/chunks/app-pages-internals.js\\\"],\\\"\\\"]\\n3:D{\\\"name\\\":\\\"\\\",\\\"env\\\":\\\"Server\\\"}\\n4:D{\\\"name\\\":\\\"NotFound\\\",\\\"env\\\":\\\"Server\\\"}\\n4:[[\\\"$\\\",\\\"title\\\",null,{\\\"children\\\":\\\"404: This page could not be found.\\\"}],[\\\"$\\\",\\\"div\\\",null,{\\\"style\\\":{\\\"fontFamily\\\":\\\"system-ui,\\\\\\\"Segoe UI\\\\\\\",Roboto,Helvetica,Arial,sans-serif,\\\\\\\"Apple Color Emoji\\\\\\\",\\\\\\\"Segoe UI Emoji\\\\\\\"\\\",\\\"height\\\":\\\"100vh\\\",\\\"textAlign\\\":\\\"center\\\",\\\"display\\\":\\\"flex\\\",\\\"flexDirection\\\":\\\"column\\\",\\\"alignItems\\\":\\\"center\\\",\\\"justifyContent\\\":\\\"center\\\"},\\\"children\\\":[\\\"$\\\",\\\"div\\\",null,{\\\"children\\\":[[\\\"$\\\",\\\"style\\\",null,{\\\"dangerouslySetInnerHTML\\\":{\\\"__html\\\":\\\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\\\"}}],[\\\"$\\\",\\\"h1\\\",null,{\\\"className\\\":\\\"next-error-h1\\\",\\\"style\\\":{\\\"display\\\":\\\"inline-block\\\",\\\"margin\\\":\\\"0 20px 0 0\\\",\\\"padding\\\":\\\"0 23px 0 0\\\",\\\"fontSize\\\":24,\\\"fontWeight\\\":500,\\\"verticalAlign\\\":\\\"top\\\",\\\"lineHeight\\\":\\\"49px\\\"},\\\"children\\\":\\\"404\\\"}],[\\\"$\\\",\\\"div\\\",null,{\\\"style\\\":{\\\"display\\\":\\\"inline-block\\\"},\\\"children\\\":[\\\"$\\\",\\\"h2\\\",null,{\\\"style\\\":{\\\"fontSize\\\":14,\\\"fontWeight\\\":400,\\\"lineHeight\\\":\\\"49px\\\",\\\"margin\\\":0},\\\"children\\\":\\\"This page could not be found.\\\"}]}]]}]}]]\\n8:D{\\\"name\\\":\\\"NotFound\\\",\\\"env\\\":\\\"Server\\\"}\\n9:{\\\"fontFamily\\\":\\\"system-ui,\\\\\\\"Segoe UI\\\\\\\",Roboto,Helvetica,Arial,sans-serif,\\\\\\\"Apple Color Emoji\\\\\\\",\\\\\\\"Segoe UI Emoji\\\\\\\"\\\",\\\"height\\\":\\\"100vh\\\",\\\"tex\"])</script><script>self.__next_f.push([1,\"tAlign\\\":\\\"center\\\",\\\"display\\\":\\\"flex\\\",\\\"flexDirection\\\":\\\"column\\\",\\\"alignItems\\\":\\\"center\\\",\\\"justifyContent\\\":\\\"center\\\"}\\na:{\\\"display\\\":\\\"inline-block\\\",\\\"margin\\\":\\\"0 20px 0 0\\\",\\\"padding\\\":\\\"0 23px 0 0\\\",\\\"fontSize\\\":24,\\\"fontWeight\\\":500,\\\"verticalAlign\\\":\\\"top\\\",\\\"lineHeight\\\":\\\"49px\\\"}\\nb:{\\\"display\\\":\\\"inline-block\\\"}\\nc:{\\\"fontSize\\\":14,\\\"fontWeight\\\":400,\\\"lineHeight\\\":\\\"49px\\\",\\\"margin\\\":0}\\n8:[[\\\"$\\\",\\\"title\\\",null,{\\\"children\\\":\\\"404: This page could not be found.\\\"}],[\\\"$\\\",\\\"div\\\",null,{\\\"style\\\":\\\"$9\\\",\\\"children\\\":[\\\"$\\\",\\\"div\\\",null,{\\\"children\\\":[[\\\"$\\\",\\\"style\\\",null,{\\\"dangerouslySetInnerHTML\\\":{\\\"__html\\\":\\\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\\\"}}],[\\\"$\\\",\\\"h1\\\",null,{\\\"className\\\":\\\"next-error-h1\\\",\\\"style\\\":\\\"$a\\\",\\\"children\\\":\\\"404\\\"}],[\\\"$\\\",\\\"div\\\",null,{\\\"style\\\":\\\"$b\\\",\\\"children\\\":[\\\"$\\\",\\\"h2\\\",null,{\\\"style\\\":\\\"$c\\\",\\\"children\\\":\\\"This page could not be found.\\\"}]}]]}]}]]\\nd:D{\\\"name\\\":\\\"\\\",\\\"env\\\":\\\"Server\\\"}\\nf:[]\\n0:[[[\\\"$\\\",\\\"link\\\",\\\"0\\\",{\\\"rel\\\":\\\"stylesheet\\\",\\\"href\\\":\\\"/_next/static/css/app/layout.css?v=1766900517349\\\",\\\"precedence\\\":\\\"next_static/css/app/layout.css\\\",\\\"crossOrigin\\\":\\\"$undefined\\\"}]],[\\\"$\\\",\\\"$L2\\\",null,{\\\"buildId\\\":\\\"development\\\",\\\"assetPrefix\\\":\\\"\\\",\\\"initialCanonicalUrl\\\":\\\"/auth/login?callbackUrl=https%3A%2F%2Fsecuresync-5.preview.emergentagent.com\\\",\\\"initialTree\\\":[\\\"\\\",{\\\"children\\\":[\\\"/_not-found\\\",{\\\"children\\\":[\\\"__PAGE__?{\\\\\\\"callbackUrl\\\\\\\":\\\\\\\"https://securesync-5.preview.emergentagent.com\\\\\\\"}\\\",{}]}]},\\\"$undefined\\\",\\\"$undefined\\\",true],\\\"initialSeedData\\\":[\\\"\\\",{\\\"children\\\":[\\\"/_not-found\\\",{\\\"children\\\":[\\\"__PAGE__\\\",{},[[\\\"$L3\\\",\\\"$4\\\"],null],null]},[\\\"$\\\",\\\"$L5\\\",null,{\\\"parallelRouterKey\\\":\\\"children\\\",\\\"segmentPath\\\":[\\\"children\\\",\\\"/_not-found\\\",\\\"children\\\"],\\\"error\\\":\\\"$undefined\\\",\\\"errorStyles\\\":\\\"$undefined\\\",\\\"errorScripts\\\":\\\"$undefined\\\",\\\"template\\\":[\\\"$\\\",\\\"$L6\\\",null,{}],\\\"templateStyles\\\":\\\"$undefined\\\",\\\"templateScripts\\\":\\\"$undefined\\\",\\\"notFound\\\":\\\"$undefined\\\",\\\"notFoundStyles\\\":\\\"$undefined\\\",\\\"styles\\\":null}],null]},[[\\\"$\\\",\\\"$L7\\\",null,{\\\"children\\\":[\\\"$\\\",\\\"$L5\\\",null,{\\\"parallelRouterKey\\\":\\\"children\\\",\\\"segm\"])</script><script>self.__next_f.push([1,\"entPath\\\":[\\\"children\\\"],\\\"error\\\":\\\"$undefined\\\",\\\"errorStyles\\\":\\\"$undefined\\\",\\\"errorScripts\\\":\\\"$undefined\\\",\\\"template\\\":[\\\"$\\\",\\\"$L6\\\",null,{}],\\\"templateStyles\\\":\\\"$undefined\\\",\\\"templateScripts\\\":\\\"$undefined\\\",\\\"notFound\\\":\\\"$8\\\",\\\"notFoundStyles\\\":[],\\\"styles\\\":null}],\\\"params\\\":{}}],null],null],\\\"couldBeIntercepted\\\":false,\\\"initialHead\\\":[[\\\"$\\\",\\\"meta\\\",null,{\\\"name\\\":\\\"robots\\\",\\\"content\\\":\\\"noindex\\\"}],\\\"$Ld\\\"],\\\"globalErrorComponent\\\":\\\"$e\\\",\\\"missingSlots\\\":\\\"$Wf\\\"}]]\\n\"])</script><script>self.__next_f.push([1,\"d:[[\\\"$\\\",\\\"meta\\\",\\\"0\\\",{\\\"name\\\":\\\"viewport\\\",\\\"content\\\":\\\"width=device-width, initial-scale=1\\\"}],[\\\"$\\\",\\\"meta\\\",\\\"1\\\",{\\\"charSet\\\":\\\"utf-8\\\"}]]\\n3:null\\n\"])</script></body></html>"
+      "message": "No authentication cookies found",
+      "timestamp": "2025-12-28T06:01:29.767503",
+      "response_data": null
     },
     {
       "test": "Get All Users",
-      "success": false,
-      "message": "Failed with status 401",
-      "timestamp": "2025-12-28T05:41:58.101528",
-      "response_data": "{\"error\":\"Unauthorized\"}"
+      "success": true,
+      "message": "Retrieved 6 users",
+      "timestamp": "2025-12-28T06:01:30.143830",
+      "response_data": {
+        "users": [
+          {
+            "_id": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
+            "name": "Test User 2",
+            "email": "test2@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test2@example.com",
+            "status": "offline",
+            "createdAt": "2025-12-28T05:41:48.253Z"
+          },
+          {
+            "_id": "44a772c5-6259-4ff8-90ad-d596aa9e98e1",
+            "name": "Pradeep",
+            "email": "pradeepchandragajendra@gmail.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=pradeepchandragajendra@gmail.com",
+            "status": "offline",
+            "createdAt": "2025-12-28T05:48:28.409Z"
+          },
+          {
+            "_id": "4f012185-eb9c-4e74-befd-9e9143502519",
+            "name": "DB Test User",
+            "email": "dbtest_20251228_054354@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=dbtest_20251228_054354@example.com",
+            "status": "offline",
+            "createdAt": "2025-12-28T05:43:54.975Z"
+          },
+          {
+            "_id": "77a682db-4ec3-4325-8beb-54f0e82de752",
+            "name": "Bob Smith",
+            "email": "bob.smith@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob.smith@example.com",
+            "status": "offline",
+            "createdAt": "2025-12-28T05:43:54.776Z"
+          },
+          {
+            "_id": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
+            "name": "Test User 1",
+            "email": "test1@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test1@example.com",
+            "status": "offline",
+            "createdAt": "2025-12-28T05:41:48.150Z"
+          },
+          {
+            "_id": "c3403559-7d97-411c-a723-e47fef838f3d",
+            "name": "Alice Johnson",
+            "email": "alice.johnson@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice.johnson@example.com",
+            "status": "offline",
+            "createdAt": "2025-12-28T05:43:54.581Z"
+          }
+        ]
+      }
     },
     {
       "test": "Search Users",
-      "success": false,
-      "message": "Failed with status 401",
-      "timestamp": "2025-12-28T05:41:58.111259",
-      "response_data": "{\"error\":\"Unauthorized\"}"
+      "success": true,
+      "message": "Search returned 3 users",
+      "timestamp": "2025-12-28T06:01:30.156209",
+      "response_data": {
+        "users": [
+          {
+            "_id": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
+            "name": "Test User 2",
+            "email": "test2@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test2@example.com",
+            "status": "offline",
+            "createdAt": "2025-12-28T05:41:48.253Z"
+          },
+          {
+            "_id": "4f012185-eb9c-4e74-befd-9e9143502519",
+            "name": "DB Test User",
+            "email": "dbtest_20251228_054354@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=dbtest_20251228_054354@example.com",
+            "status": "offline",
+            "createdAt": "2025-12-28T05:43:54.975Z"
+          },
+          {
+            "_id": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
+            "name": "Test User 1",
+            "email": "test1@example.com",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test1@example.com",
+            "status": "offline",
+            "createdAt": "2025-12-28T05:41:48.150Z"
+          }
+        ]
+      }
     },
     {
       "test": "Create Conversation",
       "success": false,
       "message": "Cannot test - User 2 ID not available",
-      "timestamp": "2025-12-28T05:41:58.111287",
+      "timestamp": "2025-12-28T06:01:30.156236",
       "response_data": null
     },
     {
       "test": "Get Conversations",
-      "success": false,
-      "message": "Failed with status 401",
-      "timestamp": "2025-12-28T05:41:58.300364",
-      "response_data": "{\"error\":\"Unauthorized\"}"
+      "success": true,
+      "message": "Retrieved 1 conversations",
+      "timestamp": "2025-12-28T06:01:30.369698",
+      "response_data": {
+        "conversations": [
+          {
+            "_id": "e1b5815b-ff9c-4277-aafd-4b50e1829eea",
+            "type": "direct",
+            "participants": [
+              null,
+              "4f012185-eb9c-4e74-befd-9e9143502519"
+            ],
+            "createdAt": "2025-12-28T05:48:42.195Z",
+            "updatedAt": "2025-12-28T05:48:47.245Z",
+            "lastMessage": "Hi there",
+            "participantDetails": [
+              {
+                "_id": "4f012185-eb9c-4e74-befd-9e9143502519",
+                "name": "DB Test User",
+                "email": "dbtest_20251228_054354@example.com",
+                "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=dbtest_20251228_054354@example.com",
+                "status": "offline",
+                "createdAt": "2025-12-28T05:43:54.975Z"
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "test": "Send Message",
       "success": false,
       "message": "Cannot test - Conversation ID not available",
-      "timestamp": "2025-12-28T05:41:58.300402",
+      "timestamp": "2025-12-28T06:01:30.369734",
       "response_data": null
     },
     {
       "test": "Get Messages",
       "success": false,
       "message": "Cannot test - Conversation ID not available",
-      "timestamp": "2025-12-28T05:41:58.300406",
+      "timestamp": "2025-12-28T06:01:30.369740",
       "response_data": null
     },
     {
       "test": "Update Message Status",
       "success": false,
       "message": "Cannot test - Message ID not available",
-      "timestamp": "2025-12-28T05:41:58.300411",
+      "timestamp": "2025-12-28T06:01:30.369744",
+      "response_data": null
+    },
+    {
+      "test": "Create Group",
+      "success": false,
+      "message": "Cannot test - User 2 ID not available",
+      "timestamp": "2025-12-28T06:01:30.369750",
+      "response_data": null
+    },
+    {
+      "test": "Add Group Member",
+      "success": false,
+      "message": "Cannot test - Group ID not available",
+      "timestamp": "2025-12-28T06:01:30.369753",
+      "response_data": null
+    },
+    {
+      "test": "Remove Group Member",
+      "success": false,
+      "message": "Cannot test - Group ID or User 2 ID not available",
+      "timestamp": "2025-12-28T06:01:30.369757",
+      "response_data": null
+    },
+    {
+      "test": "Group Admin Permissions",
+      "success": false,
+      "message": "Cannot test - Group ID not available",
+      "timestamp": "2025-12-28T06:01:30.369762",
+      "response_data": null
+    },
+    {
+      "test": "Create Voice Call",
+      "success": false,
+      "message": "Cannot test - User 2 ID not available",
+      "timestamp": "2025-12-28T06:01:30.369767",
+      "response_data": null
+    },
+    {
+      "test": "Create Video Call",
+      "success": false,
+      "message": "Cannot test - User 2 ID not available",
+      "timestamp": "2025-12-28T06:01:30.369771",
+      "response_data": null
+    },
+    {
+      "test": "Update Call Status (Active)",
+      "success": false,
+      "message": "Cannot test - Call ID not available",
+      "timestamp": "2025-12-28T06:01:30.369774",
+      "response_data": null
+    },
+    {
+      "test": "Update Call Status (Ended)",
+      "success": false,
+      "message": "Cannot test - Call ID not available",
+      "timestamp": "2025-12-28T06:01:30.369777",
+      "response_data": null
+    },
+    {
+      "test": "File Upload",
+      "success": true,
+      "message": "File uploaded successfully",
+      "timestamp": "2025-12-28T06:01:30.486982",
+      "response_data": {
+        "url": "/uploads/cb70fb29-e849-46cd-b02a-602b52115d14.txt",
+        "filename": "test_file.txt",
+        "size": 39,
+        "type": "text/plain"
+      }
+    },
+    {
+      "test": "Upload Response Structure",
+      "success": true,
+      "message": "Upload response has correct structure",
+      "timestamp": "2025-12-28T06:01:30.487006",
+      "response_data": null
+    },
+    {
+      "test": "Send Image Message",
+      "success": false,
+      "message": "Cannot test - Conversation ID or uploaded file URL not available",
+      "timestamp": "2025-12-28T06:01:30.487255",
+      "response_data": null
+    },
+    {
+      "test": "Send File Message",
+      "success": false,
+      "message": "Cannot test - Conversation ID or uploaded file URL not available",
+      "timestamp": "2025-12-28T06:01:30.487275",
       "response_data": null
     },
     {
       "test": "Invalid Registration Data",
       "success": true,
       "message": "Correctly rejected invalid data with status 400",
-      "timestamp": "2025-12-28T05:41:58.346125",
+      "timestamp": "2025-12-28T06:01:30.499425",
       "response_data": null
     },
     {
       "test": "Invalid Conversation Creation",
-      "success": true,
-      "message": "Correctly rejected invalid participant ID with status 401",
-      "timestamp": "2025-12-28T05:41:58.355919",
+      "success": false,
+      "message": "Should have rejected invalid participant ID but returned 200",
+      "timestamp": "2025-12-28T06:01:30.540290",
       "response_data": null
     }
   ]
