@@ -118,20 +118,29 @@ export default function CallModal({
       console.log('🎬 Initiating call...');
       setCallStatus('calling');
       
-      // Get user media
+      // Get user media with echo cancellation
       const constraints = {
-        audio: true,
-        video: call.type === 'video'
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        },
+        video: call.type === 'video' ? {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        } : false
       };
       
       console.log('🎥 Requesting media with constraints:', constraints);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('✅ Got local stream:', stream.getTracks().map(t => t.kind));
+      console.log('✅ Got local stream:', stream.getTracks().map(t => `${t.kind} (enabled: ${t.enabled})`));
       
       localStreamRef.current = stream;
       
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
+        await localVideoRef.current.play();
       }
 
       // Create peer connection
@@ -140,9 +149,13 @@ export default function CallModal({
 
       // Add local stream tracks to peer connection
       stream.getTracks().forEach((track) => {
-        console.log('➕ Adding track to peer connection:', track.kind);
-        peerConnection.addTrack(track, stream);
+        console.log('➕ Adding track to peer connection:', track.kind, track.label);
+        const sender = peerConnection.addTrack(track, stream);
+        console.log('✅ Track added, sender:', sender);
       });
+
+      // Wait a bit for tracks to settle
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Create and send offer
       console.log('📝 Creating offer...');
@@ -150,6 +163,8 @@ export default function CallModal({
         offerToReceiveAudio: true,
         offerToReceiveVideo: call.type === 'video'
       });
+      
+      console.log('📝 Offer created:', offer.type);
       await peerConnection.setLocalDescription(offer);
       console.log('✅ Local description set');
 
@@ -163,7 +178,13 @@ export default function CallModal({
       });
     } catch (error) {
       console.error('❌ Error initiating call:', error);
-      toast.error(`Failed to access ${call.type === 'video' ? 'camera/microphone' : 'microphone'}`);
+      if (error.name === 'NotAllowedError') {
+        toast.error('Please allow camera/microphone access');
+      } else if (error.name === 'NotFoundError') {
+        toast.error('Camera/microphone not found');
+      } else {
+        toast.error(`Failed to access ${call.type === 'video' ? 'camera/microphone' : 'microphone'}`);
+      }
       endCall();
     }
   };
