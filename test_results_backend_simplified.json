@@ -1,0 +1,151 @@
+{
+  "total": 17,
+  "passed": 17,
+  "failed": 0,
+  "results": [
+    {
+      "test": "Basic Connectivity",
+      "success": true,
+      "message": "API is accessible - Hello World",
+      "timestamp": "2025-12-28T05:43:54.430902",
+      "response_data": null
+    },
+    {
+      "test": "User 1 Registration",
+      "success": true,
+      "message": "User 1 registered successfully",
+      "timestamp": "2025-12-28T05:43:54.588815",
+      "response_data": {
+        "message": "User created successfully",
+        "userId": "c3403559-7d97-411c-a723-e47fef838f3d"
+      }
+    },
+    {
+      "test": "User 2 Registration",
+      "success": true,
+      "message": "User 2 registered successfully",
+      "timestamp": "2025-12-28T05:43:54.839761",
+      "response_data": {
+        "message": "User created successfully",
+        "userId": "77a682db-4ec3-4325-8beb-54f0e82de752"
+      }
+    },
+    {
+      "test": "Database Connectivity",
+      "success": true,
+      "message": "Database operations working (user created)",
+      "timestamp": "2025-12-28T05:43:54.979071",
+      "response_data": {
+        "message": "User created successfully",
+        "userId": "4f012185-eb9c-4e74-befd-9e9143502519"
+      }
+    },
+    {
+      "test": "NextAuth CSRF",
+      "success": true,
+      "message": "CSRF endpoint working",
+      "timestamp": "2025-12-28T05:43:55.001680",
+      "response_data": {
+        "csrfToken": "f499d725ac9586abefc4e41925bff9b6cf398accb25e89522023ad7df2f4b513"
+      }
+    },
+    {
+      "test": "NextAuth Providers",
+      "success": true,
+      "message": "Providers available: ['credentials']",
+      "timestamp": "2025-12-28T05:43:55.011665",
+      "response_data": {
+        "credentials": {
+          "id": "credentials",
+          "name": "Credentials",
+          "type": "credentials",
+          "signinUrl": "https://securesync-5.preview.emergentagent.com/api/auth/signin/credentials",
+          "callbackUrl": "https://securesync-5.preview.emergentagent.com/api/auth/callback/credentials"
+        }
+      }
+    },
+    {
+      "test": "NextAuth Session",
+      "success": true,
+      "message": "Session endpoint working (active session found)",
+      "timestamp": "2025-12-28T05:43:55.041389",
+      "response_data": {}
+    },
+    {
+      "test": "Protected: Get Users",
+      "success": true,
+      "message": "Correctly returns 401 Unauthorized",
+      "timestamp": "2025-12-28T05:43:55.050287",
+      "response_data": null
+    },
+    {
+      "test": "Protected: Search Users",
+      "success": true,
+      "message": "Correctly returns 401 Unauthorized",
+      "timestamp": "2025-12-28T05:43:55.060117",
+      "response_data": null
+    },
+    {
+      "test": "Protected: Get Conversations",
+      "success": true,
+      "message": "Correctly returns 401 Unauthorized",
+      "timestamp": "2025-12-28T05:43:55.074135",
+      "response_data": null
+    },
+    {
+      "test": "Protected: Create Conversation",
+      "success": true,
+      "message": "Correctly returns 401 Unauthorized",
+      "timestamp": "2025-12-28T05:43:55.083179",
+      "response_data": null
+    },
+    {
+      "test": "Protected: Get Messages",
+      "success": true,
+      "message": "Correctly returns 401 Unauthorized",
+      "timestamp": "2025-12-28T05:43:55.846759",
+      "response_data": null
+    },
+    {
+      "test": "Protected: Send Message",
+      "success": true,
+      "message": "Correctly returns 401 Unauthorized",
+      "timestamp": "2025-12-28T05:43:55.857273",
+      "response_data": null
+    },
+    {
+      "test": "Protected: Update Message Status",
+      "success": true,
+      "message": "Correctly returns 401 Unauthorized",
+      "timestamp": "2025-12-28T05:43:56.058464",
+      "response_data": null
+    },
+    {
+      "test": "Registration Validation",
+      "success": true,
+      "message": "Correctly validates input: Name, email, and password are required",
+      "timestamp": "2025-12-28T05:43:56.068853",
+      "response_data": null
+    },
+    {
+      "test": "Conversation Endpoint Structure",
+      "success": true,
+      "message": "Endpoint exists and requires authentication",
+      "timestamp": "2025-12-28T05:43:56.077166",
+      "response_data": null
+    },
+    {
+      "test": "Messages Endpoint Structure",
+      "success": true,
+      "message": "Endpoint exists and requires authentication",
+      "timestamp": "2025-12-28T05:43:56.087231",
+      "response_data": null
+    }
+  ],
+  "analysis": {
+    "registration_working": true,
+    "database_working": true,
+    "auth_working": true,
+    "protection_working": true
+  }
+}
