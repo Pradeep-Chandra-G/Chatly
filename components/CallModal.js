@@ -29,23 +29,37 @@ export default function CallModal({
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
   const iceCandidatesQueue = useRef([]);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
     if (!isOpen || !call) return;
+
+    // Prevent double initialization in React Strict Mode
+    if (hasInitialized.current) {
+      console.log('⚠️ Already initialized, skipping...');
+      return;
+    }
+    hasInitialized.current = true;
 
     console.log('📞 Call modal opened', { call, isIncoming });
 
     if (isIncoming) {
       setCallStatus('ringing');
     } else {
-      // Initiate call immediately
-      initiateCall();
+      // Use a small delay to ensure video ref is mounted
+      setTimeout(() => {
+        initiateCall();
+      }, 50);
     }
 
     return () => {
       cleanup();
+      // Reset on actual unmount (when modal closes)
+      if (!isOpen) {
+        hasInitialized.current = false;
+      }
     };
-  }, [isOpen, call?._id]); // Only re-run when callId changes
+  }, [isOpen, call?._id]);
 
   useEffect(() => {
     if (!socket) return;
