@@ -83,7 +83,7 @@ export async function POST(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
