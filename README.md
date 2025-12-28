@@ -216,6 +216,11 @@ Client <-> Socket.io <-> Server <-> MongoDB
 - `message:send` - Send new message
 - `message:delivered` - Mark message as delivered
 - `message:read` - Mark message as read
+- `call:initiate` - Start voice/video call
+- `call:answer` - Answer incoming call
+- `call:ice-candidate` - Exchange ICE candidates
+- `call:reject` - Reject incoming call
+- `call:end` - End active call
 
 **Server -> Client:**
 - `user:status` - User online/offline status
@@ -223,6 +228,11 @@ Client <-> Socket.io <-> Server <-> MongoDB
 - `message:status` - Message status update
 - `user:typing` - User is typing
 - `user:stop-typing` - User stopped typing
+- `call:incoming` - Incoming call notification
+- `call:answered` - Call was answered
+- `call:rejected` - Call was rejected
+- `call:ended` - Call ended
+- `call:ice-candidate` - ICE candidate from peer
 
 ### Database Schema
 
@@ -244,7 +254,10 @@ Client <-> Socket.io <-> Server <-> MongoDB
 {
   _id: UUID,
   type: String (direct/group),
+  name: String (for groups),
+  avatar: String (for groups),
   participants: [UUID],
+  admin: UUID (for groups),
   lastMessage: String,
   createdAt: Date,
   updatedAt: Date
@@ -258,8 +271,25 @@ Client <-> Socket.io <-> Server <-> MongoDB
   conversationId: UUID,
   senderId: UUID,
   content: String,
+  type: String (text/image/file/audio/video),
+  mediaUrl: String (optional),
+  fileName: String (optional),
+  fileSize: Number (optional),
   status: String (sent/delivered/read),
   createdAt: Date
+}
+```
+
+**Calls Collection:**
+```javascript
+{
+  _id: UUID,
+  callerId: UUID,
+  receiverId: UUID,
+  type: String (voice/video),
+  status: String (ringing/active/ended/rejected),
+  startedAt: Date,
+  endedAt: Date
 }
 ```
 
