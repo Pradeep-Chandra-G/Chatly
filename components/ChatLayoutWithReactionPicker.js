@@ -4,9 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { signOut } from "next-auth/react";
 import { io } from "socket.io-client";
 import { Button } from "@/components/ui/button";
+import ReactionPicker from "@/components/ReactionPicker";
 import { Input } from "@/components/ui/input";
-import MessageContextMenu from "@/components/MessageContextMenu";
-import ReplyPreview from "@/components/ReplyPreview";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -25,8 +24,6 @@ import {
   Download,
   ArrowLeft,
   X,
-  Reply,
-  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import NewChatDialog from "@/components/NewChatDialog";
@@ -56,9 +53,6 @@ export default function ChatLayout({ session }) {
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const notificationPermission = useRef(false);
-  const [contextMenu, setContextMenu] = useState(null);
-  const [longPressTimer, setLongPressTimer] = useState(null);
-  const [replyingTo, setReplyingTo] = useState(null);
 
   // Request notification permission
   useEffect(() => {
@@ -395,12 +389,7 @@ export default function ChatLayout({ session }) {
     if (!messageInput.trim() || !selectedConversation) return;
 
     const messageContent = messageInput.trim();
-    const replyToId = replyingTo?._id || null; // Capture this BEFORE clearing state
-
-    // Clear input and reply state immediately for better UX
     setMessageInput("");
-    const tempReplyingTo = replyingTo; // Store temporarily
-    setReplyingTo(null);
 
     try {
       const response = await fetch("/api/messages", {
@@ -409,7 +398,6 @@ export default function ChatLayout({ session }) {
         body: JSON.stringify({
           conversationId: selectedConversation._id,
           content: messageContent,
-          replyTo: replyToId,
         }),
       });
 
@@ -427,17 +415,9 @@ export default function ChatLayout({ session }) {
         }
 
         loadConversations();
-      } else {
-        // If send failed, restore the reply state
-        setReplyingTo(tempReplyingTo);
-        setMessageInput(messageContent);
-        toast.error("Failed to send message");
       }
     } catch (error) {
       console.error("Message send error:", error);
-      // Restore state on error
-      setReplyingTo(tempReplyingTo);
-      setMessageInput(messageContent);
       toast.error("Failed to send message");
     }
   };
@@ -753,93 +733,6 @@ export default function ChatLayout({ session }) {
     return Object.values(grouped);
   };
 
-  const handleContextMenu = (e, message) => {
-    e.preventDefault();
-    const isOwn = message.senderId === session.user.id;
-
-    setContextMenu({
-      message,
-      position: { x: e.clientX, y: e.clientY },
-      isOwnMessage: isOwn,
-    });
-  };
-
-  const handleLongPressStart = (e, message) => {
-    const touch = e.touches[0];
-    const isOwn = message.senderId === session.user.id;
-
-    const timer = setTimeout(() => {
-      // Trigger haptic feedback if available
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-
-      setContextMenu({
-        message,
-        position: { x: touch.clientX, y: touch.clientY },
-        isOwnMessage: isOwn,
-      });
-    }, 500); // 500ms long press
-
-    setLongPressTimer(timer);
-  };
-
-  const handleLongPressEnd = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  };
-
-  const closeContextMenu = () => {
-    setContextMenu(null);
-  };
-
-  const handleReplyToMessage = (message) => {
-    // Find sender name from conversations
-    let senderName = "Unknown";
-
-    if (message.senderId === session.user.id) {
-      senderName = "You";
-    } else {
-      const sender = conversations
-        .flatMap((c) => c.participantDetails || [])
-        .find((u) => u._id === message.senderId);
-      senderName = sender?.name || "Unknown";
-    }
-
-    setReplyingTo({
-      ...message,
-      senderName: senderName,
-    });
-
-    // Focus on message input
-    setTimeout(() => {
-      const input = document.querySelector(
-        'input[placeholder="Type a message..."]'
-      );
-      if (input) {
-        input.focus();
-      }
-    }, 100);
-  };
-
-  const cancelReply = () => {
-    setReplyingTo(null);
-  };
-
-  const handleEditMessage = (message) => {
-    // This will be implemented in the next feature
-    console.log("Edit:", message);
-    toast.info("Edit feature coming next!");
-  };
-
-  const handleDeleteMessage = (message) => {
-    // This will be implemented in the next feature
-    console.log("Delete:", message);
-    toast.info("Delete feature coming next!");
-  };
-
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <div className="hidden md:flex md:w-80 lg:w-96 border-r border-border flex-col">
@@ -944,72 +837,18 @@ export default function ChatLayout({ session }) {
                 return (
                   <div
                     key={message._id}
-                    id={`msg-${message._id}`}
                     className={`flex mb-3 sm:mb-4 ${
                       isOwn ? "justify-end" : "justify-start"
                     }`}
                   >
                     <div className="flex flex-col max-w-[85%] sm:max-w-[70%]">
                       <div
-                        className={`rounded-lg px-3 sm:px-4 py-2 cursor-pointer select-none ${
+                        className={`rounded-lg px-3 sm:px-4 py-2 ${
                           isOwn
                             ? "bg-primary text-primary-foreground"
                             : "bg-card"
                         }`}
-                        onContextMenu={(e) => handleContextMenu(e, message)}
-                        onTouchStart={(e) => handleLongPressStart(e, message)}
-                        onTouchEnd={handleLongPressEnd}
-                        onTouchMove={handleLongPressEnd}
                       >
-                        {/* Show quoted/replied message if exists */}
-                        {message.replyToMessage && (
-                          <div
-                            className="bg-black/10 dark:bg-white/10 border-l-2 border-primary/50 rounded px-2 py-1 mb-2 cursor-pointer hover:bg-black/20 dark:hover:bg-white/20 transition-colors"
-                            onClick={() => {
-                              // Scroll to the original message
-                              const originalMsg = document.getElementById(
-                                `msg-${message.replyToMessage._id}`
-                              );
-                              if (originalMsg) {
-                                originalMsg.scrollIntoView({
-                                  behavior: "smooth",
-                                  block: "center",
-                                });
-                                originalMsg.classList.add("highlight-message");
-                                setTimeout(() => {
-                                  originalMsg.classList.remove(
-                                    "highlight-message"
-                                  );
-                                }, 2000);
-                              }
-                            }}
-                          >
-                            <p className="text-xs font-semibold opacity-80 mb-1">
-                              {message.replyToMessage.senderId ===
-                              session.user.id
-                                ? "You"
-                                : "Reply"}
-                            </p>
-                            {message.replyToMessage.type === "image" ? (
-                              <div className="flex items-center gap-2 text-xs opacity-70">
-                                <ImageIcon className="w-3 h-3" />
-                                <span>Photo</span>
-                              </div>
-                            ) : message.replyToMessage.type === "file" ? (
-                              <div className="flex items-center gap-2 text-xs opacity-70">
-                                <FileText className="w-3 h-3" />
-                                <span>
-                                  {message.replyToMessage.fileName || "File"}
-                                </span>
-                              </div>
-                            ) : (
-                              <p className="text-xs opacity-70 line-clamp-2">
-                                {message.replyToMessage.content}
-                              </p>
-                            )}
-                          </div>
-                        )}
-
                         {message.type === "image" && message.mediaUrl && (
                           <div className="mb-2">
                             <img
@@ -1050,17 +889,26 @@ export default function ChatLayout({ session }) {
                           </p>
                         )}
 
-                        <div className="flex items-center gap-1 justify-end mt-1">
-                          <span className="text-xs opacity-70">
-                            {new Date(message.createdAt).toLocaleTimeString(
-                              [],
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </span>
-                          {getMessageStatusIcon(message)}
+                        <div className="flex items-center gap-1 justify-between mt-1">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs opacity-70">
+                              {new Date(message.createdAt).toLocaleTimeString(
+                                [],
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </span>
+                            {getMessageStatusIcon(message)}
+                          </div>
+                          <ReactionPicker
+                            onReactionSelect={(emoji) =>
+                              handleReaction(message._id, emoji)
+                            }
+                            existingReactions={message.reactions || []}
+                            currentUserId={session.user.id}
+                          />
                         </div>
                       </div>
 
@@ -1106,9 +954,6 @@ export default function ChatLayout({ session }) {
               onSubmit={handleSendMessage}
               className="bg-card p-3 sm:p-4 border-t border-border"
             >
-              {replyingTo && (
-                <ReplyPreview replyTo={replyingTo} onCancel={cancelReply} />
-              )}
               <div className="flex gap-2">
                 <MediaUpload
                   onMediaUploaded={handleMediaUploaded}
@@ -1173,20 +1018,6 @@ export default function ChatLayout({ session }) {
           socket={socket}
           currentUserId={session.user.id}
           isIncoming={isIncomingCall}
-        />
-      )}
-      {contextMenu && (
-        <MessageContextMenu
-          message={contextMenu.message}
-          position={contextMenu.position}
-          onClose={closeContextMenu}
-          onReaction={(emoji) => handleReaction(contextMenu.message._id, emoji)}
-          onReply={() => handleReplyToMessage(contextMenu.message)}
-          onEdit={() => handleEditMessage(contextMenu.message)}
-          onDelete={() => handleDeleteMessage(contextMenu.message)}
-          isOwnMessage={contextMenu.isOwnMessage}
-          existingReactions={contextMenu.message.reactions || []}
-          currentUserId={session.user.id}
         />
       )}
     </div>

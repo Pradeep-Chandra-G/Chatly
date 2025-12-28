@@ -183,6 +183,24 @@ app.prepare().then(() => {
       }
     });
 
+    socket.on(
+      "message:reaction",
+      ({ messageId, conversationId, reactions }) => {
+        console.log("Reaction updated for message:", messageId);
+        io.to(conversationId).emit("message:reaction-update", {
+          messageId,
+          reactions,
+        });
+      }
+    );
+
+    socket.on("message:reaction-update", ({ messageId, reactions }) => {
+      console.log("Reaction updated for message:", messageId);
+      setMessages((prev) =>
+        prev.map((msg) => (msg._id === messageId ? { ...msg, reactions } : msg))
+      );
+    });
+
     socket.on("disconnect", () => {
       if (socket.userId) {
         userSockets.delete(socket.userId);
