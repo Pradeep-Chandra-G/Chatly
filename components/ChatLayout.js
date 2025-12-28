@@ -198,6 +198,7 @@ export default function ChatLayout({ session }) {
             return [...prevMessages, message];
           });
 
+          // If message is from someone else and we're viewing the chat, mark as read
           if (message.senderId !== session.user.id) {
             setTimeout(() => {
               socket.emit("message:read", {
@@ -215,6 +216,24 @@ export default function ChatLayout({ session }) {
               }).catch(console.error);
             }, 100);
           }
+        } else if (message.senderId !== session.user.id) {
+          // Message is for a conversation we're not viewing
+          // Mark as delivered since we're online
+          setTimeout(() => {
+            socket.emit("message:delivered", {
+              messageId: message._id,
+              conversationId: message.conversationId,
+            });
+
+            fetch("/api/messages/status", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                messageId: message._id,
+                status: "delivered",
+              }),
+            }).catch(console.error);
+          }, 100);
         }
 
         return currentConv;

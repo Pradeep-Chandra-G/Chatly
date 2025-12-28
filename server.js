@@ -33,6 +33,7 @@ app.prepare().then(() => {
   });
 
   const userSockets = new Map();
+  const userConversations = new Map(); // Track which conversations each user has joined
 
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
@@ -41,6 +42,12 @@ app.prepare().then(() => {
       userSockets.set(userId, socket.id);
       socket.userId = userId;
       socket.join(userId);
+
+      // Initialize conversation tracking for this user
+      if (!userConversations.has(userId)) {
+        userConversations.set(userId, new Set());
+      }
+
       io.emit("user:status", { userId, status: "online" });
     });
 
@@ -61,14 +68,61 @@ app.prepare().then(() => {
 
     socket.on("conversation:join", (conversationId) => {
       socket.join(conversationId);
+
+      // Track that this user has joined this conversation
+      if (socket.userId && userConversations.has(socket.userId)) {
+        userConversations.get(socket.userId).add(conversationId);
+      }
+
+      console.log(
+        `User ${socket.userId} joined conversation ${conversationId}`
+      );
     });
 
     socket.on("conversation:leave", (conversationId) => {
       socket.leave(conversationId);
+
+      // Remove from tracking
+      if (socket.userId && userConversations.has(socket.userId)) {
+        userConversations.get(socket.userId).delete(conversationId);
+      }
+
+      console.log(`User ${socket.userId} left conversation ${conversationId}`);
     });
 
     socket.on("message:send", (data) => {
+      console.log(
+        "Message sent:",
+        data._id,
+        "to conversation:",
+        data.conversationId
+      );
+
+      // Broadcast to conversation room
       io.to(data.conversationId).emit("message:new", data);
+
+      // Check if any online users in this conversation have it open
+      // and automatically mark as delivered
+      const conversationSockets = io.sockets.adapter.rooms.get(
+        data.conversationId
+      );
+
+      if (conversationSockets && conversationSockets.size > 1) {
+        // More than just the sender is in the room
+        // Mark as delivered immediately for online users
+        console.log(
+          "Message delivered to online users in conversation:",
+          data.conversationId
+        );
+
+        // Emit delivered status back to the conversation
+        setTimeout(() => {
+          io.to(data.conversationId).emit("message:status", {
+            messageId: data._id,
+            status: "delivered",
+          });
+        }, 100);
+      }
     });
 
     socket.on("message:delivered", ({ messageId, conversationId }) => {
@@ -132,6 +186,7 @@ app.prepare().then(() => {
     socket.on("disconnect", () => {
       if (socket.userId) {
         userSockets.delete(socket.userId);
+        userConversations.delete(socket.userId);
         io.emit("user:status", { userId: socket.userId, status: "offline" });
       }
       console.log("User disconnected:", socket.id);
