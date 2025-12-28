@@ -475,21 +475,41 @@ export default function CallModal({
   const cleanup = () => {
     console.log('🧹 Cleaning up call resources');
     
+    // Stop local stream tracks
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => {
         track.stop();
         console.log('⏹️ Stopped track:', track.kind);
       });
+      
+      // Clear video elements
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = null;
+      }
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = null;
+      }
+      
       localStreamRef.current = null;
     }
 
+    // Close peer connection
     if (peerConnectionRef.current) {
+      // Remove all event listeners to prevent memory leaks
+      peerConnectionRef.current.onicecandidate = null;
+      peerConnectionRef.current.ontrack = null;
+      peerConnectionRef.current.oniceconnectionstatechange = null;
+      peerConnectionRef.current.onconnectionstatechange = null;
+      peerConnectionRef.current.onsignalingstatechange = null;
+      peerConnectionRef.current.onicegatheringstatechange = null;
+      
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
       console.log('❌ Closed peer connection');
     }
 
     iceCandidatesQueue.current = [];
+    isInitialized.current = false;
   };
 
   const getStatusText = () => {
