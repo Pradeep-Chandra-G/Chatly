@@ -472,16 +472,28 @@ MIT License - Feel free to use for personal or commercial projects.
 
 ## 🔮 Roadmap
 
-- [x] User authentication
+- [x] User authentication (email/password + Google OAuth)
 - [x] 1-on-1 messaging
-- [x] Real-time updates
-- [x] Message status tracking
-- [ ] Group messaging
-- [ ] Voice calling
-- [ ] Video calling
-- [ ] Media sharing
-- [ ] Message encryption (E2E)
+- [x] Real-time updates (Socket.io)
+- [x] Message status tracking (sent/delivered/read)
+- [x] Typing indicators
+- [x] Online/offline status
+- [x] Group messaging
+- [x] Group member management
+- [x] Voice calling (WebRTC)
+- [x] Video calling (WebRTC)
+- [x] Media sharing (images)
+- [x] File sharing (documents)
+- [ ] Voice messages recording
+- [ ] Video sharing
+- [ ] Message reactions (emoji)
+- [ ] Message replies/quotes
+- [ ] Message editing
+- [ ] Message deletion
+- [ ] End-to-end encryption (E2E)
 - [ ] Push notifications
+- [ ] Message search
+- [ ] Chat export
 - [ ] Mobile app (React Native)
 
 ## 💡 Technical Decisions
