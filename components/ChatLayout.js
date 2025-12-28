@@ -270,6 +270,73 @@ export default function ChatLayout({ session }) {
     setIsNewChatOpen(false);
   };
 
+  const handleGroupCreated = (group) => {
+    setConversations((prev) => [group, ...prev]);
+    setSelectedConversation(group);
+    setIsCreateGroupOpen(false);
+  };
+
+  const handleMediaUploaded = async (media) => {
+    if (!selectedConversation) return;
+
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId: selectedConversation._id,
+          content: media.fileName || 'Media file',
+          type: media.type,
+          mediaUrl: media.url,
+          fileName: media.fileName,
+          fileSize: media.fileSize
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        socket.emit('message:send', data.message);
+        setMessages((prev) => [...prev, data.message]);
+        loadConversations();
+      }
+    } catch (error) {
+      toast.error('Failed to send media');
+    }
+  };
+
+  const initiateCall = async (type) => {
+    if (!selectedConversation || selectedConversation.type === 'group') {
+      toast.error('Calls are only available for direct conversations');
+      return;
+    }
+
+    const otherParticipant = getOtherParticipant(selectedConversation);
+    
+    try {
+      const response = await fetch('/api/calls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiverId: otherParticipant._id,
+          type
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setActiveCall({
+          ...data.call,
+          receiverName: otherParticipant.name,
+          receiverAvatar: otherParticipant.avatar
+        });
+        setIsIncomingCall(false);
+        setIsCallModalOpen(true);
+      }
+    } catch (error) {
+      toast.error('Failed to initiate call');
+    }
+  };
+
   const getOtherParticipant = (conversation) => {
     return conversation.participantDetails?.[0];
   };
