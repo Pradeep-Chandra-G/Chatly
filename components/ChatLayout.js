@@ -625,6 +625,28 @@ export default function ChatLayout({ session }) {
         onClose={() => setIsNewChatOpen(false)}
         onConversationCreated={handleNewConversation}
       />
+
+      {/* Create Group Dialog */}
+      <CreateGroupDialog
+        isOpen={isCreateGroupOpen}
+        onClose={() => setIsCreateGroupOpen(false)}
+        onGroupCreated={handleGroupCreated}
+      />
+
+      {/* Call Modal */}
+      {activeCall && (
+        <CallModal
+          isOpen={isCallModalOpen}
+          onClose={() => {
+            setIsCallModalOpen(false);
+            setActiveCall(null);
+          }}
+          call={activeCall}
+          socket={socket}
+          currentUserId={session.user.id}
+          isIncoming={isIncomingCall}
+        />
+      )}
     </div>
   );
 }
