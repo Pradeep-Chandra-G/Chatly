@@ -117,6 +117,41 @@ export default function ChatLayout({ session }) {
     socket.on('user:stop-typing', () => {
       setIsTyping(false);
     });
+
+    // Call event listeners
+    socket.on('call:incoming', ({ callId, callerId, type, offer }) => {
+      // Get caller details
+      const caller = conversations
+        .flatMap(c => c.participantDetails || [])
+        .find(u => u._id === callerId);
+      
+      setActiveCall({
+        _id: callId,
+        callerId,
+        receiverId: session.user.id,
+        type,
+        offer,
+        receiverName: caller?.name || 'Unknown',
+        receiverAvatar: caller?.avatar
+      });
+      setIsIncomingCall(true);
+      setIsCallModalOpen(true);
+      
+      // Play ringtone (you can add audio here)
+      toast.info(`Incoming ${type} call from ${caller?.name || 'Unknown'}`);
+    });
+
+    socket.on('call:rejected', ({ callId }) => {
+      toast.error('Call was rejected');
+      setIsCallModalOpen(false);
+      setActiveCall(null);
+    });
+
+    socket.on('call:ended', ({ callId }) => {
+      toast.info('Call ended');
+      setIsCallModalOpen(false);
+      setActiveCall(null);
+    });
   };
 
   // Load conversations
