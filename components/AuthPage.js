@@ -55,7 +55,6 @@ export default function AuthPage() {
         toast.error(data.error || 'Registration failed');
       } else {
         toast.success('Account created! Please login.');
-        // Auto-switch to login tab
         document.querySelector('[value="login"]')?.click();
       }
     } catch (error) {
@@ -72,37 +71,37 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500 rounded-full mb-4">
-            <MessageCircle className="w-8 h-8 text-white" />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-green-500 rounded-full mb-3 sm:mb-4">
+            <MessageCircle className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">WhatsApp Clone</h1>
-          <p className="text-gray-600 mt-2">Encrypted instant messaging for everyone</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Chatly</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-2">Encrypted instant messaging for everyone</p>
         </div>
 
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
+            <TabsTrigger value="login" className="text-sm sm:text-base">Login</TabsTrigger>
+            <TabsTrigger value="register" className="text-sm sm:text-base">Register</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
             <Card>
-              <CardHeader>
-                <CardTitle>Welcome back</CardTitle>
-                <CardDescription>Login to your account to continue</CardDescription>
+              <CardHeader className="space-y-1 p-4 sm:p-6">
+                <CardTitle className="text-xl sm:text-2xl">Welcome back</CardTitle>
+                <CardDescription className="text-sm">Login to your account to continue</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="login-email" className="text-sm">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="login-email"
                         type="email"
                         placeholder="you@example.com"
-                        className="pl-10"
+                        className="pl-10 text-sm sm:text-base h-10 sm:h-11"
                         value={loginData.email}
                         onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                         required
@@ -110,21 +109,21 @@ export default function AuthPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                    <Label htmlFor="login-password" className="text-sm">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="login-password"
                         type="password"
                         placeholder="••••••••"
-                        className="pl-10"
+                        className="pl-10 text-sm sm:text-base h-10 sm:h-11"
                         value={loginData.password}
                         onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                         required
                       />
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-10 sm:h-11 text-sm sm:text-base" disabled={isLoading}>
                     {isLoading ? 'Logging in...' : 'Login'}
                   </Button>
 
@@ -141,10 +140,10 @@ export default function AuthPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full"
+                        className="w-full h-10 sm:h-11 text-sm sm:text-base"
                         onClick={handleGoogleSignIn}
                       >
-                        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24">
                           <path
                             fill="currentColor"
                             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -173,21 +172,21 @@ export default function AuthPage() {
 
           <TabsContent value="register">
             <Card>
-              <CardHeader>
-                <CardTitle>Create account</CardTitle>
-                <CardDescription>Sign up to start messaging</CardDescription>
+              <CardHeader className="space-y-1 p-4 sm:p-6">
+                <CardTitle className="text-xl sm:text-2xl">Create account</CardTitle>
+                <CardDescription className="text-sm">Sign up to start messaging</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="register-name">Name</Label>
+                    <Label htmlFor="register-name" className="text-sm">Name</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="register-name"
                         type="text"
                         placeholder="John Doe"
-                        className="pl-10"
+                        className="pl-10 text-sm sm:text-base h-10 sm:h-11"
                         value={registerData.name}
                         onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                         required
@@ -195,14 +194,14 @@ export default function AuthPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
+                    <Label htmlFor="register-email" className="text-sm">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="register-email"
                         type="email"
                         placeholder="you@example.com"
-                        className="pl-10"
+                        className="pl-10 text-sm sm:text-base h-10 sm:h-11"
                         value={registerData.email}
                         onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                         required
@@ -210,14 +209,14 @@ export default function AuthPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
+                    <Label htmlFor="register-password" className="text-sm">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="register-password"
                         type="password"
                         placeholder="••••••••"
-                        className="pl-10"
+                        className="pl-10 text-sm sm:text-base h-10 sm:h-11"
                         value={registerData.password}
                         onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                         required
@@ -225,7 +224,7 @@ export default function AuthPage() {
                       />
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-10 sm:h-11 text-sm sm:text-base" disabled={isLoading}>
                     {isLoading ? 'Creating account...' : 'Create account'}
                   </Button>
                 </form>
@@ -234,7 +233,7 @@ export default function AuthPage() {
           </TabsContent>
         </Tabs>
 
-        <p className="text-center text-sm text-gray-600 mt-4">
+        <p className="text-center text-xs sm:text-sm text-gray-600 mt-4">
           Open source • Self-hostable • TLS encrypted
         </p>
       </div>
