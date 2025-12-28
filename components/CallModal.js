@@ -307,41 +307,27 @@ export default function CallModal({
     }
   };
 
-  const createPeerConnection = () => {
-    const configuration = {
-      iceServers: [
-        // STUN servers for public IP discovery
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        // Public TURN servers (free, limited bandwidth)
-        {
-          urls: 'turn:openrelay.metered.ca:80',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        },
-        {
-          urls: 'turn:openrelay.metered.ca:443',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        },
-        {
-          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        }
-      ],
-      iceTransportPolicy: 'all', // Use all available candidates
-      iceCandidatePoolSize: 10,
-      bundlePolicy: 'max-bundle',
-      rtcpMuxPolicy: 'require'
-    };
+  const createPeerConnection = async () => {
+    try {
+      // Fetch TURN credentials from our API
+      console.log('🔑 Fetching TURN credentials...');
+      const response = await fetch('/api/turn-credentials');
+      const { iceServers } = await response.json();
+      console.log('✅ Got ICE servers:', iceServers.length, 'servers');
 
-    console.log('🔧 Creating peer connection with config:', configuration);
-    const peerConnection = new RTCPeerConnection(configuration);
+      const configuration = {
+        iceServers,
+        iceTransportPolicy: 'all',
+        iceCandidatePoolSize: 10,
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require'
+      };
 
-    // Store peer connection immediately
-    peerConnectionRef.current = peerConnection;
+      console.log('🔧 Creating peer connection with config');
+      const peerConnection = new RTCPeerConnection(configuration);
+
+      // Store peer connection immediately
+      peerConnectionRef.current = peerConnection;
 
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
