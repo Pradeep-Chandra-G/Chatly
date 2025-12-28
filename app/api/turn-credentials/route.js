@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     const apiKey = process.env.METERED_API_KEY;
+    const meteredDomain = process.env.METERED_DOMAIN || 'https://your-subdomain.metered.live';
     
     if (!apiKey || apiKey === 'your-metered-api-key-here') {
       // Return default free TURN servers if no API key
@@ -21,7 +22,7 @@ export async function GET() {
 
     // Fetch credentials from Metered.ca
     const response = await fetch(
-      `https://whatsapp-clone.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`
+      `${meteredDomain}/api/v1/turn/credentials?apiKey=${apiKey}`
     );
 
     if (!response.ok) {
