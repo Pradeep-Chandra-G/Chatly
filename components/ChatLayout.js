@@ -69,6 +69,13 @@ export default function ChatLayout({ session }) {
   }, []);
 
   const socketInitializer = async () => {
+    // Don't reinitialize if already connected
+    if (socket && socket.connected) {
+      console.log('Socket already connected, skipping initialization');
+      return;
+    }
+
+    // Disconnect existing socket if any
     if (socket) {
       socket.disconnect();
     }
