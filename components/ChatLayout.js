@@ -465,27 +465,56 @@ export default function ChatLayout({ session }) {
             <div className="bg-card p-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={getOtherParticipant(selectedConversation)?.avatar} />
+                  <AvatarImage 
+                    src={selectedConversation.type === 'group' 
+                      ? selectedConversation.avatar 
+                      : getOtherParticipant(selectedConversation)?.avatar
+                    } 
+                  />
                   <AvatarFallback>
-                    {getOtherParticipant(selectedConversation)?.name?.[0]}
+                    {selectedConversation.type === 'group'
+                      ? selectedConversation.name?.[0]
+                      : getOtherParticipant(selectedConversation)?.name?.[0]
+                    }
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="font-semibold">
-                    {getOtherParticipant(selectedConversation)?.name}
+                  <h2 className="font-semibold flex items-center gap-2">
+                    {selectedConversation.type === 'group'
+                      ? selectedConversation.name
+                      : getOtherParticipant(selectedConversation)?.name
+                    }
+                    {selectedConversation.type === 'group' && (
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                    )}
                   </h2>
                   <p className="text-xs text-muted-foreground">
-                    {isTyping
+                    {selectedConversation.type === 'group'
+                      ? `${selectedConversation.participants?.length || 0} members`
+                      : isTyping
                       ? 'typing...'
                       : isUserOnline(getOtherParticipant(selectedConversation)?._id)
                       ? 'online'
-                      : 'offline'}
+                      : 'offline'
+                    }
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="w-5 h-5" />
-              </Button>
+              <div className="flex gap-2">
+                {selectedConversation.type === 'direct' && (
+                  <>
+                    <Button variant="ghost" size="icon" onClick={() => initiateCall('voice')}>
+                      <Phone className="w-5 h-5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => initiateCall('video')}>
+                      <Video className="w-5 h-5" />
+                    </Button>
+                  </>
+                )}
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
 
             {/* Messages */}
