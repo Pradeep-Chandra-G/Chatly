@@ -533,7 +533,40 @@ export default function ChatLayout({ session }) {
                           : 'bg-card'
                       }`}
                     >
-                      <p className="break-words">{message.content}</p>
+                      {/* Media Content */}
+                      {message.type === 'image' && message.mediaUrl && (
+                        <div className="mb-2">
+                          <img
+                            src={message.mediaUrl}
+                            alt="Shared image"
+                            className="rounded-lg max-w-full h-auto max-h-64 object-cover cursor-pointer"
+                            onClick={() => window.open(message.mediaUrl, '_blank')}
+                          />
+                        </div>
+                      )}
+                      {message.type === 'file' && message.mediaUrl && (
+                        <a
+                          href={message.mediaUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-muted/20 rounded-lg hover:bg-muted/30 transition-colors mb-2"
+                        >
+                          <FileText className="w-8 h-8" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold truncate">{message.fileName || 'File'}</p>
+                            <p className="text-xs opacity-70">
+                              {message.fileSize ? `${(message.fileSize / 1024).toFixed(2)} KB` : 'Download'}
+                            </p>
+                          </div>
+                          <Download className="w-5 h-5" />
+                        </a>
+                      )}
+                      
+                      {/* Text Content */}
+                      {message.content && (
+                        <p className="break-words">{message.content}</p>
+                      )}
+                      
                       <div className="flex items-center gap-1 justify-end mt-1">
                         <span className="text-xs opacity-70">
                           {new Date(message.createdAt).toLocaleTimeString([], {
@@ -553,6 +586,10 @@ export default function ChatLayout({ session }) {
             {/* Message Input */}
             <form onSubmit={handleSendMessage} className="bg-card p-4 border-t border-border">
               <div className="flex gap-2">
+                <MediaUpload
+                  onMediaUploaded={handleMediaUploaded}
+                  disabled={!selectedConversation}
+                />
                 <Input
                   placeholder="Type a message..."
                   value={messageInput}
