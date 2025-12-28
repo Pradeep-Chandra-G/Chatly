@@ -414,7 +414,10 @@ export default function CallModal({
                 ref={remoteVideoRef}
                 autoPlay
                 playsInline
+                muted={false}
                 className="w-full h-full object-cover"
+                onLoadedMetadata={() => console.log('📺 Remote video loaded')}
+                onPlay={() => console.log('▶️ Remote video playing')}
               />
               
               {/* Local Video (Picture-in-Picture) */}
@@ -425,21 +428,38 @@ export default function CallModal({
                   playsInline
                   muted
                   className="w-full h-full object-cover"
+                  onLoadedMetadata={() => console.log('📺 Local video loaded')}
                 />
               </div>
+
+              {/* Status Indicator */}
+              {callStatus !== 'connected' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <p className="text-white text-lg">{getStatusText()}</p>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Voice Call Avatar */}
+          {/* Voice Call - Hidden audio element for remote stream */}
           {call?.type === 'voice' && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Avatar className="w-24 h-24 mb-4">
-                <AvatarImage src={call.receiverAvatar} />
-                <AvatarFallback>{call.receiverName?.[0]}</AvatarFallback>
-              </Avatar>
-              <h3 className="text-xl font-semibold">{call.receiverName}</h3>
-              <p className="text-muted-foreground">{getStatusText()}</p>
-            </div>
+            <>
+              <audio
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                onLoadedMetadata={() => console.log('🔊 Remote audio loaded')}
+                onPlay={() => console.log('▶️ Remote audio playing')}
+              />
+              <div className="flex flex-col items-center justify-center py-12">
+                <Avatar className="w-24 h-24 mb-4">
+                  <AvatarImage src={call.receiverAvatar} />
+                  <AvatarFallback>{call.receiverName?.[0]}</AvatarFallback>
+                </Avatar>
+                <h3 className="text-xl font-semibold">{call.receiverName}</h3>
+                <p className="text-muted-foreground">{getStatusText()}</p>
+              </div>
+            </>
           )}
 
           {/* Call Controls */}
