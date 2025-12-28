@@ -383,14 +383,38 @@ export default function CallModal({
 
     peerConnection.oniceconnectionstatechange = () => {
       console.log('🔌 ICE connection state:', peerConnection.iceConnectionState);
-      if (peerConnection.iceConnectionState === 'connected') {
-        setCallStatus('connected');
-        toast.success('Call connected');
-      } else if (peerConnection.iceConnectionState === 'disconnected') {
-        toast.warning('Connection interrupted...');
-      } else if (peerConnection.iceConnectionState === 'failed') {
-        toast.error('Connection failed');
-        endCall();
+      
+      switch (peerConnection.iceConnectionState) {
+        case 'connected':
+        case 'completed':
+          setCallStatus('connected');
+          toast.success('Call connected');
+          break;
+        case 'disconnected':
+          console.warn('⚠️ ICE connection disconnected, waiting for reconnection...');
+          // Don't immediately end call, wait for reconnection
+          break;
+        case 'failed':
+          console.error('❌ ICE connection failed');
+          toast.error('Connection failed - trying to reconnect...');
+          
+          // Try to restart ICE
+          if (peerConnection.restartIce) {
+            console.log('🔄 Restarting ICE...');
+            peerConnection.restartIce();
+          } else {
+            // If restart not available, end call
+            setTimeout(() => {
+              if (peerConnection.iceConnectionState === 'failed') {
+                toast.error('Connection failed');
+                endCall();
+              }
+            }, 3000); // Give 3 seconds for recovery
+          }
+          break;
+        case 'closed':
+          console.log('❌ ICE connection closed');
+          break;
       }
     };
 
