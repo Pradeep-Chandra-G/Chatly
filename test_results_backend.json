@@ -1,69 +1,69 @@
 {
-  "total": 32,
-  "passed": 25,
-  "failed": 7,
+  "total": 35,
+  "passed": 33,
+  "failed": 2,
   "results": [
     {
       "test": "Basic Connectivity",
       "success": true,
       "message": "API is accessible - Hello World",
-      "timestamp": "2025-12-28T06:04:56.977174",
+      "timestamp": "2025-12-28T06:05:33.863100",
       "response_data": null
     },
     {
       "test": "User 1 Registration",
       "success": true,
       "message": "User 1 already exists (expected)",
-      "timestamp": "2025-12-28T06:04:57.339571",
+      "timestamp": "2025-12-28T06:05:34.555741",
       "response_data": null
     },
     {
       "test": "User 2 Registration",
       "success": true,
       "message": "User 2 already exists (expected)",
-      "timestamp": "2025-12-28T06:04:57.352443",
+      "timestamp": "2025-12-28T06:05:34.567598",
       "response_data": null
     },
     {
       "test": "User 1 ID Set",
       "success": true,
       "message": "Using known User 1 ID",
-      "timestamp": "2025-12-28T06:04:57.352461",
+      "timestamp": "2025-12-28T06:05:34.567626",
       "response_data": null
     },
     {
       "test": "User 2 ID Set",
       "success": true,
       "message": "Using known User 2 ID",
-      "timestamp": "2025-12-28T06:04:57.352465",
+      "timestamp": "2025-12-28T06:05:34.567630",
       "response_data": null
     },
     {
       "test": "Get CSRF Token",
       "success": true,
       "message": "CSRF token retrieved successfully",
-      "timestamp": "2025-12-28T06:04:57.372028",
+      "timestamp": "2025-12-28T06:05:34.795913",
       "response_data": null
     },
     {
       "test": "User Authentication",
       "success": true,
       "message": "Login successful with status 200",
-      "timestamp": "2025-12-28T06:04:57.664848",
+      "timestamp": "2025-12-28T06:05:34.977889",
       "response_data": null
     },
     {
       "test": "Session Cookies",
       "success": false,
       "message": "No authentication cookies found",
-      "timestamp": "2025-12-28T06:04:57.664892",
+      "timestamp": "2025-12-28T06:05:34.977934",
       "response_data": null
     },
     {
       "test": "Get All Users",
       "success": true,
       "message": "Retrieved 6 users",
-      "timestamp": "2025-12-28T06:04:57.675498",
+      "timestamp": "2025-12-28T06:05:35.047139",
       "response_data": {
         "users": [
           {
@@ -121,7 +121,7 @@
       "test": "Search Users",
       "success": true,
       "message": "Search returned 3 users",
-      "timestamp": "2025-12-28T06:04:57.742441",
+      "timestamp": "2025-12-28T06:05:35.059585",
       "response_data": {
         "users": [
           {
@@ -155,61 +155,46 @@
       "test": "Create Conversation",
       "success": true,
       "message": "Conversation created successfully",
-      "timestamp": "2025-12-28T06:04:57.942708",
+      "timestamp": "2025-12-28T06:05:35.341725",
       "response_data": {
         "conversation": {
-          "_id": "a693137e-f59e-42fd-b89b-be3e582c373b",
+          "_id": "b423a024-af4a-4d2d-bc8b-b0d05a00bdbe",
           "type": "direct",
           "participants": [
-            null,
+            "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
             "32d1906a-2bbc-434d-9337-aa3f885fdee9"
           ],
-          "createdAt": "2025-12-28T06:02:08.155Z",
-          "updatedAt": "2025-12-28T06:03:07.869Z",
-          "lastMessage": "\ud83d\udcce file"
+          "createdAt": "2025-12-28T06:05:35.337Z",
+          "updatedAt": "2025-12-28T06:05:35.337Z",
+          "participantDetails": [
+            {
+              "_id": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
+              "name": "Test User 2",
+              "email": "test2@example.com",
+              "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test2@example.com",
+              "status": "offline",
+              "createdAt": "2025-12-28T05:41:48.253Z"
+            }
+          ]
         }
       }
     },
     {
       "test": "Get Conversations",
       "success": true,
-      "message": "Retrieved 5 conversations",
-      "timestamp": "2025-12-28T06:04:58.046332",
+      "message": "Retrieved 3 conversations",
+      "timestamp": "2025-12-28T06:05:35.354395",
       "response_data": {
         "conversations": [
           {
-            "_id": "b42076e8-aff9-45e3-ad7d-6ab82be03ea3",
-            "type": "group",
-            "name": "Debug Group",
-            "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Debug Group",
-            "participants": [
-              null,
-              "32d1906a-2bbc-434d-9337-aa3f885fdee9"
-            ],
-            "admin": null,
-            "createdAt": "2025-12-28T06:03:24.765Z",
-            "updatedAt": "2025-12-28T06:03:24.765Z",
-            "participantDetails": [
-              {
-                "_id": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
-                "name": "Test User 2",
-                "email": "test2@example.com",
-                "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test2@example.com",
-                "status": "offline",
-                "createdAt": "2025-12-28T05:41:48.253Z"
-              }
-            ]
-          },
-          {
-            "_id": "a693137e-f59e-42fd-b89b-be3e582c373b",
+            "_id": "b423a024-af4a-4d2d-bc8b-b0d05a00bdbe",
             "type": "direct",
             "participants": [
-              null,
+              "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
               "32d1906a-2bbc-434d-9337-aa3f885fdee9"
             ],
-            "createdAt": "2025-12-28T06:02:08.155Z",
-            "updatedAt": "2025-12-28T06:03:07.869Z",
-            "lastMessage": "\ud83d\udcce file",
+            "createdAt": "2025-12-28T06:05:35.337Z",
+            "updatedAt": "2025-12-28T06:05:35.337Z",
             "participantDetails": [
               {
                 "_id": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
@@ -222,17 +207,17 @@
             ]
           },
           {
-            "_id": "ad98afda-9821-46eb-93b0-da97b63bbd7f",
+            "_id": "6579b98e-0a37-42ed-afdd-b3c4dd2abc8d",
             "type": "group",
             "name": "Test Group",
             "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Test Group",
             "participants": [
-              null,
+              "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
               "32d1906a-2bbc-434d-9337-aa3f885fdee9"
             ],
-            "admin": null,
-            "createdAt": "2025-12-28T06:03:06.765Z",
-            "updatedAt": "2025-12-28T06:03:06.765Z",
+            "admin": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
+            "createdAt": "2025-12-28T06:04:58.458Z",
+            "updatedAt": "2025-12-28T06:04:58.500Z",
             "participantDetails": [
               {
                 "_id": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
@@ -245,34 +230,34 @@
             ]
           },
           {
-            "_id": "5b55496b-15bd-410b-b94e-d0901898bcff",
-            "type": "direct",
+            "_id": "8b72cb0c-8b73-479c-9b72-164d7ad81533",
+            "type": "group",
+            "name": "Fixed Group",
+            "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Fixed Group",
             "participants": [
-              null,
-              "invalid-id"
+              "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
+              "32d1906a-2bbc-434d-9337-aa3f885fdee9",
+              "c3403559-7d97-411c-a723-e47fef838f3d"
             ],
-            "createdAt": "2025-12-28T06:01:30.509Z",
-            "updatedAt": "2025-12-28T06:01:30.509Z",
-            "participantDetails": []
-          },
-          {
-            "_id": "e1b5815b-ff9c-4277-aafd-4b50e1829eea",
-            "type": "direct",
-            "participants": [
-              null,
-              "4f012185-eb9c-4e74-befd-9e9143502519"
-            ],
-            "createdAt": "2025-12-28T05:48:42.195Z",
-            "updatedAt": "2025-12-28T05:48:47.245Z",
-            "lastMessage": "Hi there",
+            "admin": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
+            "createdAt": "2025-12-28T06:04:51.569Z",
+            "updatedAt": "2025-12-28T06:04:51.848Z",
             "participantDetails": [
               {
-                "_id": "4f012185-eb9c-4e74-befd-9e9143502519",
-                "name": "DB Test User",
-                "email": "dbtest_20251228_054354@example.com",
-                "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=dbtest_20251228_054354@example.com",
+                "_id": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
+                "name": "Test User 2",
+                "email": "test2@example.com",
+                "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test2@example.com",
                 "status": "offline",
-                "createdAt": "2025-12-28T05:43:54.975Z"
+                "createdAt": "2025-12-28T05:41:48.253Z"
+              },
+              {
+                "_id": "c3403559-7d97-411c-a723-e47fef838f3d",
+                "name": "Alice Johnson",
+                "email": "alice.johnson@example.com",
+                "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice.johnson@example.com",
+                "status": "offline",
+                "createdAt": "2025-12-28T05:43:54.581Z"
               }
             ]
           }
@@ -281,33 +266,69 @@
     },
     {
       "test": "Send Message",
-      "success": false,
-      "message": "Failed with status 404",
-      "timestamp": "2025-12-28T06:04:58.441814",
-      "response_data": "{\"error\":\"Conversation not found\"}"
+      "success": true,
+      "message": "Message sent successfully",
+      "timestamp": "2025-12-28T06:05:35.550883",
+      "response_data": {
+        "message": {
+          "_id": "3f3081a9-90a7-4553-ba20-866f85fd71dc",
+          "conversationId": "b423a024-af4a-4d2d-bc8b-b0d05a00bdbe",
+          "senderId": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
+          "content": "Hello! This is a test message from the automated test suite.",
+          "type": "text",
+          "status": "sent",
+          "createdAt": "2025-12-28T06:05:35.547Z"
+        }
+      }
     },
     {
       "test": "Get Messages",
-      "success": false,
-      "message": "Failed with status 404",
-      "timestamp": "2025-12-28T06:04:58.451026",
-      "response_data": "{\"error\":\"Conversation not found\"}"
+      "success": true,
+      "message": "Retrieved 1 messages",
+      "timestamp": "2025-12-28T06:05:35.564253",
+      "response_data": {
+        "messages": [
+          {
+            "_id": "3f3081a9-90a7-4553-ba20-866f85fd71dc",
+            "conversationId": "b423a024-af4a-4d2d-bc8b-b0d05a00bdbe",
+            "senderId": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
+            "content": "Hello! This is a test message from the automated test suite.",
+            "type": "text",
+            "mediaUrl": null,
+            "fileName": null,
+            "fileSize": null,
+            "status": "sent",
+            "createdAt": "2025-12-28T06:05:35.547Z"
+          }
+        ]
+      }
     },
     {
-      "test": "Update Message Status",
-      "success": false,
-      "message": "Cannot test - Message ID not available",
-      "timestamp": "2025-12-28T06:04:58.451051",
-      "response_data": null
+      "test": "Update Message Status (Delivered)",
+      "success": true,
+      "message": "Status updated to delivered",
+      "timestamp": "2025-12-28T06:05:35.668643",
+      "response_data": {
+        "success": true
+      }
+    },
+    {
+      "test": "Update Message Status (Read)",
+      "success": true,
+      "message": "Status updated to read",
+      "timestamp": "2025-12-28T06:05:35.680739",
+      "response_data": {
+        "success": true
+      }
     },
     {
       "test": "Create Group",
       "success": true,
       "message": "Group created successfully",
-      "timestamp": "2025-12-28T06:04:58.461275",
+      "timestamp": "2025-12-28T06:05:35.785577",
       "response_data": {
         "group": {
-          "_id": "6579b98e-0a37-42ed-afdd-b3c4dd2abc8d",
+          "_id": "167d9d01-8bc3-4590-9e2d-a75f71230141",
           "type": "group",
           "name": "Test Group",
           "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Test Group",
@@ -316,8 +337,8 @@
             "32d1906a-2bbc-434d-9337-aa3f885fdee9"
           ],
           "admin": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
-          "createdAt": "2025-12-28T06:04:58.458Z",
-          "updatedAt": "2025-12-28T06:04:58.458Z",
+          "createdAt": "2025-12-28T06:05:35.781Z",
+          "updatedAt": "2025-12-28T06:05:35.781Z",
           "participantDetails": [
             {
               "_id": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
@@ -343,14 +364,14 @@
       "test": "Group Structure Validation",
       "success": true,
       "message": "Group has correct structure",
-      "timestamp": "2025-12-28T06:04:58.461292",
+      "timestamp": "2025-12-28T06:05:35.785602",
       "response_data": null
     },
     {
       "test": "Add Group Member",
       "success": true,
       "message": "Member added successfully",
-      "timestamp": "2025-12-28T06:04:58.480507",
+      "timestamp": "2025-12-28T06:05:35.907034",
       "response_data": {
         "success": true
       }
@@ -359,7 +380,7 @@
       "test": "Remove Group Member",
       "success": true,
       "message": "Member removed successfully",
-      "timestamp": "2025-12-28T06:04:58.490475",
+      "timestamp": "2025-12-28T06:05:35.944906",
       "response_data": {
         "success": true
       }
@@ -368,22 +389,22 @@
       "test": "Admin Add Member Permission",
       "success": true,
       "message": "Admin can add members",
-      "timestamp": "2025-12-28T06:04:58.502135",
+      "timestamp": "2025-12-28T06:05:35.957447",
       "response_data": null
     },
     {
       "test": "Create Voice Call",
       "success": true,
       "message": "Voice call created successfully",
-      "timestamp": "2025-12-28T06:04:58.752203",
+      "timestamp": "2025-12-28T06:05:36.160293",
       "response_data": {
         "call": {
-          "_id": "dcf8ae07-e5d7-43e9-93b9-a676e20f5eaa",
+          "_id": "ae4fb79c-3ae8-4e3a-8f9d-ffd9da5b9c3f",
           "callerId": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
           "receiverId": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
           "type": "voice",
           "status": "ringing",
-          "startedAt": "2025-12-28T06:04:58.749Z",
+          "startedAt": "2025-12-28T06:05:36.157Z",
           "endedAt": null
         }
       }
@@ -392,22 +413,22 @@
       "test": "Voice Call Structure",
       "success": true,
       "message": "Call has correct structure",
-      "timestamp": "2025-12-28T06:04:58.752228",
+      "timestamp": "2025-12-28T06:05:36.160316",
       "response_data": null
     },
     {
       "test": "Create Video Call",
       "success": true,
       "message": "Video call created successfully",
-      "timestamp": "2025-12-28T06:04:58.761615",
+      "timestamp": "2025-12-28T06:05:36.173433",
       "response_data": {
         "call": {
-          "_id": "0c72ee1b-a9c2-4789-ae1d-f3f1be7754df",
+          "_id": "0853a9a4-3344-4fed-8204-847ada675ff0",
           "callerId": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
           "receiverId": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
           "type": "video",
           "status": "ringing",
-          "startedAt": "2025-12-28T06:04:58.759Z",
+          "startedAt": "2025-12-28T06:05:36.170Z",
           "endedAt": null
         }
       }
@@ -416,14 +437,14 @@
       "test": "Video Call Structure",
       "success": true,
       "message": "Call has correct structure",
-      "timestamp": "2025-12-28T06:04:58.761635",
+      "timestamp": "2025-12-28T06:05:36.173456",
       "response_data": null
     },
     {
       "test": "Update Call Status (Active)",
       "success": true,
       "message": "Call status updated to active",
-      "timestamp": "2025-12-28T06:04:58.770428",
+      "timestamp": "2025-12-28T06:05:36.184901",
       "response_data": {
         "success": true
       }
@@ -432,7 +453,7 @@
       "test": "Update Call Status (Ended)",
       "success": true,
       "message": "Call status updated to ended",
-      "timestamp": "2025-12-28T06:04:58.780083",
+      "timestamp": "2025-12-28T06:05:36.243153",
       "response_data": {
         "success": true
       }
@@ -441,9 +462,9 @@
       "test": "File Upload",
       "success": true,
       "message": "File uploaded successfully",
-      "timestamp": "2025-12-28T06:04:59.057365",
+      "timestamp": "2025-12-28T06:05:36.451148",
       "response_data": {
-        "url": "/uploads/e5ded4dd-f208-448f-b334-7383ad49b3eb.txt",
+        "url": "/uploads/21f984d5-a317-4274-863b-c5237c61cc36.txt",
         "filename": "test_file.txt",
         "size": 39,
         "type": "text/plain"
@@ -453,35 +474,74 @@
       "test": "Upload Response Structure",
       "success": true,
       "message": "Upload response has correct structure",
-      "timestamp": "2025-12-28T06:04:59.057390",
+      "timestamp": "2025-12-28T06:05:36.451174",
       "response_data": null
     },
     {
       "test": "Send Image Message",
-      "success": false,
-      "message": "Failed with status 404",
-      "timestamp": "2025-12-28T06:04:59.067779",
-      "response_data": "{\"error\":\"Conversation not found\"}"
+      "success": true,
+      "message": "Image message sent successfully",
+      "timestamp": "2025-12-28T06:05:36.464775",
+      "response_data": {
+        "message": {
+          "_id": "266efa1c-3d46-4668-b753-c8cbfe9b151f",
+          "conversationId": "b423a024-af4a-4d2d-bc8b-b0d05a00bdbe",
+          "senderId": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
+          "content": "",
+          "type": "image",
+          "mediaUrl": "/uploads/21f984d5-a317-4274-863b-c5237c61cc36.txt",
+          "fileName": "test_image.txt",
+          "status": "sent",
+          "createdAt": "2025-12-28T06:05:36.461Z"
+        }
+      }
+    },
+    {
+      "test": "Image Message Structure",
+      "success": true,
+      "message": "Message has correct structure",
+      "timestamp": "2025-12-28T06:05:36.464796",
+      "response_data": null
     },
     {
       "test": "Send File Message",
-      "success": false,
-      "message": "Failed with status 404",
-      "timestamp": "2025-12-28T06:04:59.076165",
-      "response_data": "{\"error\":\"Conversation not found\"}"
+      "success": true,
+      "message": "File message sent successfully",
+      "timestamp": "2025-12-28T06:05:36.475337",
+      "response_data": {
+        "message": {
+          "_id": "ab681ccf-9a20-453e-88a0-8f65ccc2b3e8",
+          "conversationId": "b423a024-af4a-4d2d-bc8b-b0d05a00bdbe",
+          "senderId": "b4ad996d-812e-4a57-a1c6-c2ab3c2eecaa",
+          "content": "",
+          "type": "file",
+          "mediaUrl": "/uploads/21f984d5-a317-4274-863b-c5237c61cc36.txt",
+          "fileName": "test_document.txt",
+          "fileSize": 1024,
+          "status": "sent",
+          "createdAt": "2025-12-28T06:05:36.472Z"
+        }
+      }
+    },
+    {
+      "test": "File Message Structure",
+      "success": true,
+      "message": "Message has correct structure",
+      "timestamp": "2025-12-28T06:05:36.475366",
+      "response_data": null
     },
     {
       "test": "Invalid Registration Data",
       "success": true,
       "message": "Correctly rejected invalid data with status 400",
-      "timestamp": "2025-12-28T06:04:59.140224",
+      "timestamp": "2025-12-28T06:05:36.542921",
       "response_data": null
     },
     {
       "test": "Invalid Conversation Creation",
       "success": false,
       "message": "Should have rejected invalid participant ID but returned 200",
-      "timestamp": "2025-12-28T06:04:59.151595",
+      "timestamp": "2025-12-28T06:05:36.555358",
       "response_data": null
     }
   ]
