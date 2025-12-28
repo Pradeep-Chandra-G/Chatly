@@ -1,69 +1,69 @@
 {
-  "total": 28,
-  "passed": 13,
-  "failed": 15,
+  "total": 35,
+  "passed": 30,
+  "failed": 5,
   "results": [
     {
       "test": "Basic Connectivity",
       "success": true,
       "message": "API is accessible - Hello World",
-      "timestamp": "2025-12-28T06:02:07.724714",
+      "timestamp": "2025-12-28T06:03:04.777205",
       "response_data": null
     },
     {
       "test": "User 1 Registration",
       "success": true,
       "message": "User 1 already exists (expected)",
-      "timestamp": "2025-12-28T06:02:07.750471",
+      "timestamp": "2025-12-28T06:03:05.544469",
       "response_data": null
     },
     {
       "test": "User 2 Registration",
       "success": true,
       "message": "User 2 already exists (expected)",
-      "timestamp": "2025-12-28T06:02:07.762735",
+      "timestamp": "2025-12-28T06:03:05.558600",
       "response_data": null
     },
     {
       "test": "User 1 ID Set",
       "success": true,
       "message": "Using known User 1 ID",
-      "timestamp": "2025-12-28T06:02:07.762759",
+      "timestamp": "2025-12-28T06:03:05.558620",
       "response_data": null
     },
     {
       "test": "User 2 ID Set",
       "success": true,
       "message": "Using known User 2 ID",
-      "timestamp": "2025-12-28T06:02:07.762764",
+      "timestamp": "2025-12-28T06:03:05.558625",
       "response_data": null
     },
     {
       "test": "Get CSRF Token",
       "success": true,
       "message": "CSRF token retrieved successfully",
-      "timestamp": "2025-12-28T06:02:07.777661",
+      "timestamp": "2025-12-28T06:03:05.701892",
       "response_data": null
     },
     {
       "test": "User Authentication",
       "success": true,
       "message": "Login successful with status 200",
-      "timestamp": "2025-12-28T06:02:08.055095",
+      "timestamp": "2025-12-28T06:03:05.942894",
       "response_data": null
     },
     {
       "test": "Session Cookies",
       "success": false,
       "message": "No authentication cookies found",
-      "timestamp": "2025-12-28T06:02:08.055139",
+      "timestamp": "2025-12-28T06:03:05.942939",
       "response_data": null
     },
     {
       "test": "Get All Users",
       "success": true,
       "message": "Retrieved 6 users",
-      "timestamp": "2025-12-28T06:02:08.066076",
+      "timestamp": "2025-12-28T06:03:05.958161",
       "response_data": {
         "users": [
           {
@@ -121,7 +121,7 @@
       "test": "Search Users",
       "success": true,
       "message": "Search returned 3 users",
-      "timestamp": "2025-12-28T06:02:08.146301",
+      "timestamp": "2025-12-28T06:03:05.969674",
       "response_data": {
         "users": [
           {
@@ -155,7 +155,7 @@
       "test": "Create Conversation",
       "success": true,
       "message": "Conversation created successfully",
-      "timestamp": "2025-12-28T06:02:08.159559",
+      "timestamp": "2025-12-28T06:03:06.244019",
       "response_data": {
         "conversation": {
           "_id": "a693137e-f59e-42fd-b89b-be3e582c373b",
@@ -165,17 +165,7 @@
             "32d1906a-2bbc-434d-9337-aa3f885fdee9"
           ],
           "createdAt": "2025-12-28T06:02:08.155Z",
-          "updatedAt": "2025-12-28T06:02:08.155Z",
-          "participantDetails": [
-            {
-              "_id": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
-              "name": "Test User 2",
-              "email": "test2@example.com",
-              "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test2@example.com",
-              "status": "offline",
-              "createdAt": "2025-12-28T05:41:48.253Z"
-            }
-          ]
+          "updatedAt": "2025-12-28T06:02:08.155Z"
         }
       }
     },
@@ -183,7 +173,7 @@
       "test": "Get Conversations",
       "success": true,
       "message": "Retrieved 3 conversations",
-      "timestamp": "2025-12-28T06:02:08.244821",
+      "timestamp": "2025-12-28T06:03:06.257087",
       "response_data": {
         "conversations": [
           {
@@ -243,114 +233,264 @@
     },
     {
       "test": "Send Message",
-      "success": false,
-      "message": "Failed with status 520",
-      "timestamp": "2025-12-28T06:02:13.968209",
-      "response_data": "<!DOCTYPE html><html><head><style data-next-hide-fouc=\"true\">body{display:none}</style><noscript data-next-hide-fouc=\"true\"><style>body{display:block}</style></noscript><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width\"/><meta name=\"next-head-count\" content=\"2\"/><noscript data-n-css=\"\"></noscript><script defer=\"\" nomodule=\"\" src=\"/_next/static/chunks/polyfills.js\"></script><script src=\"/_next/static/chunks/fallback/webpack.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/main.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_app.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_error.js\" defer=\"\"></script><noscript id=\"__next_css__DO_NOT_USE__\"></noscript></head><body><div id=\"__next\"></div><script src=\"/_next/static/chunks/fallback/react-refresh.js\"></script><script id=\"__NEXT_DATA__\" type=\"application/json\">{\"props\":{\"pageProps\":{\"statusCode\":500}},\"page\":\"/_error\",\"query\":{},\"buildId\":\"development\",\"isFallback\":false,\"err\":{\"name\":\"ModuleBuildError\",\"source\":\"server\",\"message\":\"Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  x Expected unicode escape\\n    ,-[/app/app/api/messages/route.js:52:1]\\n 52 | }\\n 53 | \\n 54 | export async function POST(request) {\\n 55 |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    :        ^\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\",\"stack\":\"ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  \\u001b[31mx\\u001b[0m Expected unicode escape\\n    ,-[\\u001b[36;1;4m/app/app/api/messages/route.js\\u001b[0m:52:1]\\n \\u001b[2m52\\u001b[0m | }\\n \\u001b[2m53\\u001b[0m | \\n \\u001b[2m54\\u001b[0m | export async function POST(request) {\\n \\u001b[2m55\\u001b[0m |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    : \\u001b[31;1m       ^\\u001b[0m\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\\n    at processResult (/app/node_modules/next/dist/compiled/webpack/bundle5.js:28:400590)\\n    at /app/node_modules/next/dist/compiled/webpack/bundle5.js:28:402302\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:8645\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:5019\\n    at r.callback (/app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:4039)\"},\"gip\":true,\"scriptLoader\":[]}</script></body></html>"
+      "success": true,
+      "message": "Message sent successfully",
+      "timestamp": "2025-12-28T06:03:06.477314",
+      "response_data": {
+        "message": {
+          "_id": "5d918340-ce7e-42ea-9a81-3dae6809e88f",
+          "conversationId": "a693137e-f59e-42fd-b89b-be3e582c373b",
+          "content": "Hello! This is a test message from the automated test suite.",
+          "type": "text",
+          "status": "sent",
+          "createdAt": "2025-12-28T06:03:06.473Z"
+        }
+      }
     },
     {
       "test": "Get Messages",
-      "success": false,
-      "message": "Failed with status 520",
-      "timestamp": "2025-12-28T06:02:13.993675",
-      "response_data": "<!DOCTYPE html><html><head><style data-next-hide-fouc=\"true\">body{display:none}</style><noscript data-next-hide-fouc=\"true\"><style>body{display:block}</style></noscript><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width\"/><meta name=\"next-head-count\" content=\"2\"/><noscript data-n-css=\"\"></noscript><script defer=\"\" nomodule=\"\" src=\"/_next/static/chunks/polyfills.js\"></script><script src=\"/_next/static/chunks/fallback/webpack.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/main.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_app.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_error.js\" defer=\"\"></script><noscript id=\"__next_css__DO_NOT_USE__\"></noscript></head><body><div id=\"__next\"></div><script src=\"/_next/static/chunks/fallback/react-refresh.js\"></script><script id=\"__NEXT_DATA__\" type=\"application/json\">{\"props\":{\"pageProps\":{\"statusCode\":500}},\"page\":\"/_error\",\"query\":{\"conversationId\":\"a693137e-f59e-42fd-b89b-be3e582c373b\"},\"buildId\":\"development\",\"isFallback\":false,\"err\":{\"name\":\"ModuleBuildError\",\"source\":\"server\",\"message\":\"Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  x Expected unicode escape\\n    ,-[/app/app/api/messages/route.js:52:1]\\n 52 | }\\n 53 | \\n 54 | export async function POST(request) {\\n 55 |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    :        ^\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\",\"stack\":\"ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  \\u001b[31mx\\u001b[0m Expected unicode escape\\n    ,-[\\u001b[36;1;4m/app/app/api/messages/route.js\\u001b[0m:52:1]\\n \\u001b[2m52\\u001b[0m | }\\n \\u001b[2m53\\u001b[0m | \\n \\u001b[2m54\\u001b[0m | export async function POST(request) {\\n \\u001b[2m55\\u001b[0m |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    : \\u001b[31;1m       ^\\u001b[0m\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\\n    at processResult (/app/node_modules/next/dist/compiled/webpack/bundle5.js:28:400590)\\n    at /app/node_modules/next/dist/compiled/webpack/bundle5.js:28:402302\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:8645\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:5019\\n    at r.callback (/app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:4039)\"},\"gip\":true,\"scriptLoader\":[]}</script></body></html>"
+      "success": true,
+      "message": "Retrieved 1 messages",
+      "timestamp": "2025-12-28T06:03:06.487986",
+      "response_data": {
+        "messages": [
+          {
+            "_id": "5d918340-ce7e-42ea-9a81-3dae6809e88f",
+            "conversationId": "a693137e-f59e-42fd-b89b-be3e582c373b",
+            "senderId": null,
+            "content": "Hello! This is a test message from the automated test suite.",
+            "type": "text",
+            "mediaUrl": null,
+            "fileName": null,
+            "fileSize": null,
+            "status": "sent",
+            "createdAt": "2025-12-28T06:03:06.473Z"
+          }
+        ]
+      }
     },
     {
-      "test": "Update Message Status",
-      "success": false,
-      "message": "Cannot test - Message ID not available",
-      "timestamp": "2025-12-28T06:02:13.993721",
-      "response_data": null
+      "test": "Update Message Status (Delivered)",
+      "success": true,
+      "message": "Status updated to delivered",
+      "timestamp": "2025-12-28T06:03:06.651979",
+      "response_data": {
+        "success": true
+      }
+    },
+    {
+      "test": "Update Message Status (Read)",
+      "success": true,
+      "message": "Status updated to read",
+      "timestamp": "2025-12-28T06:03:06.662832",
+      "response_data": {
+        "success": true
+      }
     },
     {
       "test": "Create Group",
-      "success": false,
-      "message": "Failed with status 520",
-      "timestamp": "2025-12-28T06:02:14.440702",
-      "response_data": "<!DOCTYPE html><html><head><style data-next-hide-fouc=\"true\">body{display:none}</style><noscript data-next-hide-fouc=\"true\"><style>body{display:block}</style></noscript><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width\"/><meta name=\"next-head-count\" content=\"2\"/><noscript data-n-css=\"\"></noscript><script defer=\"\" nomodule=\"\" src=\"/_next/static/chunks/polyfills.js\"></script><script src=\"/_next/static/chunks/fallback/webpack.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/main.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_app.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_error.js\" defer=\"\"></script><noscript id=\"__next_css__DO_NOT_USE__\"></noscript></head><body><div id=\"__next\"></div><script src=\"/_next/static/chunks/fallback/react-refresh.js\"></script><script id=\"__NEXT_DATA__\" type=\"application/json\">{\"props\":{\"pageProps\":{\"statusCode\":500}},\"page\":\"/_error\",\"query\":{},\"buildId\":\"development\",\"isFallback\":false,\"err\":{\"name\":\"ModuleBuildError\",\"source\":\"server\",\"message\":\"Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  x Expected unicode escape\\n    ,-[/app/app/api/messages/route.js:52:1]\\n 52 | }\\n 53 | \\n 54 | export async function POST(request) {\\n 55 |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    :        ^\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\",\"stack\":\"ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  \\u001b[31mx\\u001b[0m Expected unicode escape\\n    ,-[\\u001b[36;1;4m/app/app/api/messages/route.js\\u001b[0m:52:1]\\n \\u001b[2m52\\u001b[0m | }\\n \\u001b[2m53\\u001b[0m | \\n \\u001b[2m54\\u001b[0m | export async function POST(request) {\\n \\u001b[2m55\\u001b[0m |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    : \\u001b[31;1m       ^\\u001b[0m\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\\n    at processResult (/app/node_modules/next/dist/compiled/webpack/bundle5.js:28:400590)\\n    at /app/node_modules/next/dist/compiled/webpack/bundle5.js:28:402302\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:8645\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:5019\\n    at r.callback (/app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:4039)\"},\"gip\":true,\"scriptLoader\":[]}</script></body></html>"
+      "success": true,
+      "message": "Group created successfully",
+      "timestamp": "2025-12-28T06:03:06.769173",
+      "response_data": {
+        "group": {
+          "_id": "ad98afda-9821-46eb-93b0-da97b63bbd7f",
+          "type": "group",
+          "name": "Test Group",
+          "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Test Group",
+          "participants": [
+            null,
+            "32d1906a-2bbc-434d-9337-aa3f885fdee9"
+          ],
+          "createdAt": "2025-12-28T06:03:06.765Z",
+          "updatedAt": "2025-12-28T06:03:06.765Z",
+          "participantDetails": [
+            {
+              "_id": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
+              "name": "Test User 2",
+              "email": "test2@example.com",
+              "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=test2@example.com",
+              "status": "offline",
+              "createdAt": "2025-12-28T05:41:48.253Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "test": "Group Structure Validation",
+      "success": true,
+      "message": "Group has correct structure",
+      "timestamp": "2025-12-28T06:03:06.769195",
+      "response_data": null
     },
     {
       "test": "Add Group Member",
       "success": false,
-      "message": "Cannot test - Group ID not available",
-      "timestamp": "2025-12-28T06:02:14.440759",
-      "response_data": null
+      "message": "Failed with status 403",
+      "timestamp": "2025-12-28T06:03:07.260967",
+      "response_data": "{\"error\":\"Only admin can add members\"}"
     },
     {
       "test": "Remove Group Member",
       "success": false,
-      "message": "Cannot test - Group ID or User 2 ID not available",
-      "timestamp": "2025-12-28T06:02:14.440766",
-      "response_data": null
+      "message": "Failed with status 403",
+      "timestamp": "2025-12-28T06:03:07.282927",
+      "response_data": "{\"error\":\"Only admin can remove members\"}"
     },
     {
-      "test": "Group Admin Permissions",
+      "test": "Admin Add Member Permission",
       "success": false,
-      "message": "Cannot test - Group ID not available",
-      "timestamp": "2025-12-28T06:02:14.440772",
+      "message": "Admin cannot add members: 403",
+      "timestamp": "2025-12-28T06:03:07.294421",
       "response_data": null
     },
     {
       "test": "Create Voice Call",
-      "success": false,
-      "message": "Failed with status 520",
-      "timestamp": "2025-12-28T06:02:14.594031",
-      "response_data": "<!DOCTYPE html><html><head><style data-next-hide-fouc=\"true\">body{display:none}</style><noscript data-next-hide-fouc=\"true\"><style>body{display:block}</style></noscript><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width\"/><meta name=\"next-head-count\" content=\"2\"/><noscript data-n-css=\"\"></noscript><script defer=\"\" nomodule=\"\" src=\"/_next/static/chunks/polyfills.js\"></script><script src=\"/_next/static/chunks/fallback/webpack.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/main.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_app.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_error.js\" defer=\"\"></script><noscript id=\"__next_css__DO_NOT_USE__\"></noscript></head><body><div id=\"__next\"></div><script src=\"/_next/static/chunks/fallback/react-refresh.js\"></script><script id=\"__NEXT_DATA__\" type=\"application/json\">{\"props\":{\"pageProps\":{\"statusCode\":500}},\"page\":\"/_error\",\"query\":{},\"buildId\":\"development\",\"isFallback\":false,\"err\":{\"name\":\"ModuleBuildError\",\"source\":\"server\",\"message\":\"Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  x Expected unicode escape\\n    ,-[/app/app/api/messages/route.js:52:1]\\n 52 | }\\n 53 | \\n 54 | export async function POST(request) {\\n 55 |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    :        ^\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\",\"stack\":\"ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  \\u001b[31mx\\u001b[0m Expected unicode escape\\n    ,-[\\u001b[36;1;4m/app/app/api/messages/route.js\\u001b[0m:52:1]\\n \\u001b[2m52\\u001b[0m | }\\n \\u001b[2m53\\u001b[0m | \\n \\u001b[2m54\\u001b[0m | export async function POST(request) {\\n \\u001b[2m55\\u001b[0m |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    : \\u001b[31;1m       ^\\u001b[0m\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\\n    at processResult (/app/node_modules/next/dist/compiled/webpack/bundle5.js:28:400590)\\n    at /app/node_modules/next/dist/compiled/webpack/bundle5.js:28:402302\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:8645\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:5019\\n    at r.callback (/app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:4039)\"},\"gip\":true,\"scriptLoader\":[]}</script></body></html>"
+      "success": true,
+      "message": "Voice call created successfully",
+      "timestamp": "2025-12-28T06:03:07.554216",
+      "response_data": {
+        "call": {
+          "_id": "4303131c-6c4d-4e14-bba0-10e6cbe58220",
+          "receiverId": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
+          "type": "voice",
+          "status": "ringing",
+          "startedAt": "2025-12-28T06:03:07.541Z",
+          "endedAt": null
+        }
+      }
+    },
+    {
+      "test": "Voice Call Structure",
+      "success": true,
+      "message": "Call has correct structure",
+      "timestamp": "2025-12-28T06:03:07.554243",
+      "response_data": null
     },
     {
       "test": "Create Video Call",
-      "success": false,
-      "message": "Failed with status 520",
-      "timestamp": "2025-12-28T06:02:14.670461",
-      "response_data": "<!DOCTYPE html><html><head><style data-next-hide-fouc=\"true\">body{display:none}</style><noscript data-next-hide-fouc=\"true\"><style>body{display:block}</style></noscript><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width\"/><meta name=\"next-head-count\" content=\"2\"/><noscript data-n-css=\"\"></noscript><script defer=\"\" nomodule=\"\" src=\"/_next/static/chunks/polyfills.js\"></script><script src=\"/_next/static/chunks/fallback/webpack.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/main.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_app.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_error.js\" defer=\"\"></script><noscript id=\"__next_css__DO_NOT_USE__\"></noscript></head><body><div id=\"__next\"></div><script src=\"/_next/static/chunks/fallback/react-refresh.js\"></script><script id=\"__NEXT_DATA__\" type=\"application/json\">{\"props\":{\"pageProps\":{\"statusCode\":500}},\"page\":\"/_error\",\"query\":{},\"buildId\":\"development\",\"isFallback\":false,\"err\":{\"name\":\"ModuleBuildError\",\"source\":\"server\",\"message\":\"Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  x Expected unicode escape\\n    ,-[/app/app/api/messages/route.js:52:1]\\n 52 | }\\n 53 | \\n 54 | export async function POST(request) {\\n 55 |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    :        ^\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\",\"stack\":\"ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  \\u001b[31mx\\u001b[0m Expected unicode escape\\n    ,-[\\u001b[36;1;4m/app/app/api/messages/route.js\\u001b[0m:52:1]\\n \\u001b[2m52\\u001b[0m | }\\n \\u001b[2m53\\u001b[0m | \\n \\u001b[2m54\\u001b[0m | export async function POST(request) {\\n \\u001b[2m55\\u001b[0m |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    : \\u001b[31;1m       ^\\u001b[0m\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\\n    at processResult (/app/node_modules/next/dist/compiled/webpack/bundle5.js:28:400590)\\n    at /app/node_modules/next/dist/compiled/webpack/bundle5.js:28:402302\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:8645\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:5019\\n    at r.callback (/app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:4039)\"},\"gip\":true,\"scriptLoader\":[]}</script></body></html>"
+      "success": true,
+      "message": "Video call created successfully",
+      "timestamp": "2025-12-28T06:03:07.565037",
+      "response_data": {
+        "call": {
+          "_id": "19449277-33f2-4925-8388-40480bea096d",
+          "receiverId": "32d1906a-2bbc-434d-9337-aa3f885fdee9",
+          "type": "video",
+          "status": "ringing",
+          "startedAt": "2025-12-28T06:03:07.562Z",
+          "endedAt": null
+        }
+      }
+    },
+    {
+      "test": "Video Call Structure",
+      "success": true,
+      "message": "Call has correct structure",
+      "timestamp": "2025-12-28T06:03:07.565057",
+      "response_data": null
     },
     {
       "test": "Update Call Status (Active)",
-      "success": false,
-      "message": "Cannot test - Call ID not available",
-      "timestamp": "2025-12-28T06:02:14.670509",
-      "response_data": null
+      "success": true,
+      "message": "Call status updated to active",
+      "timestamp": "2025-12-28T06:03:07.574784",
+      "response_data": {
+        "success": true
+      }
     },
     {
       "test": "Update Call Status (Ended)",
-      "success": false,
-      "message": "Cannot test - Call ID not available",
-      "timestamp": "2025-12-28T06:02:14.670516",
-      "response_data": null
+      "success": true,
+      "message": "Call status updated to ended",
+      "timestamp": "2025-12-28T06:03:07.642666",
+      "response_data": {
+        "success": true
+      }
     },
     {
       "test": "File Upload",
-      "success": false,
-      "message": "Failed with status 520",
-      "timestamp": "2025-12-28T06:02:15.257252",
-      "response_data": "<!DOCTYPE html><html><head><style data-next-hide-fouc=\"true\">body{display:none}</style><noscript data-next-hide-fouc=\"true\"><style>body{display:block}</style></noscript><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width\"/><meta name=\"next-head-count\" content=\"2\"/><noscript data-n-css=\"\"></noscript><script defer=\"\" nomodule=\"\" src=\"/_next/static/chunks/polyfills.js\"></script><script src=\"/_next/static/chunks/fallback/webpack.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/main.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_app.js\" defer=\"\"></script><script src=\"/_next/static/chunks/fallback/pages/_error.js\" defer=\"\"></script><noscript id=\"__next_css__DO_NOT_USE__\"></noscript></head><body><div id=\"__next\"></div><script src=\"/_next/static/chunks/fallback/react-refresh.js\"></script><script id=\"__NEXT_DATA__\" type=\"application/json\">{\"props\":{\"pageProps\":{\"statusCode\":500}},\"page\":\"/_error\",\"query\":{},\"buildId\":\"development\",\"isFallback\":false,\"err\":{\"name\":\"ModuleBuildError\",\"source\":\"server\",\"message\":\"Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  x Expected unicode escape\\n    ,-[/app/app/api/messages/route.js:52:1]\\n 52 | }\\n 53 | \\n 54 | export async function POST(request) {\\n 55 |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    :        ^\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\",\"stack\":\"ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):\\nError: \\n  \\u001b[31mx\\u001b[0m Expected unicode escape\\n    ,-[\\u001b[36;1;4m/app/app/api/messages/route.js\\u001b[0m:52:1]\\n \\u001b[2m52\\u001b[0m | }\\n \\u001b[2m53\\u001b[0m | \\n \\u001b[2m54\\u001b[0m | export async function POST(request) {\\n \\u001b[2m55\\u001b[0m |   try {\\\\n    const session = await getServerSession();\\\\n    if (!session?.user) {\\\\n      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\\\\n    }\\\\n\\\\n    const { conversationId, content, type = 'text', mediaUrl, fileName, fileSize } = await request.json();\\\\n\\\\n    if (!conversationId || (!content \\u0026\\u0026 !mediaUrl)) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation ID and content/media are required' },\\\\n        { status: 400 }\\\\n      );\\\\n    }\\\\n\\\\n    const db = await getDb();\\\\n\\\\n    // Verify user is part of the conversation\\\\n    const conversation = await db.collection('conversations').findOne({\\\\n      _id: conversationId,\\\\n      participants: session.user.id\\\\n    });\\\\n\\\\n    if (!conversation) {\\\\n      return NextResponse.json(\\\\n        { error: 'Conversation not found' },\\\\n        { status: 404 }\\\\n      );\\\\n    }\\\\n\\\\n    // Create message\\\\n    const messageId = uuidv4();\\\\n    const newMessage = {\\\\n      _id: messageId,\\\\n      conversationId,\\\\n      senderId: session.user.id,\\\\n      content: content || '',\\\\n      type, // 'text', 'image', 'file', 'audio', 'video'\\\\n      mediaUrl,\\\\n      fileName,\\\\n      fileSize,\\\\n      status: 'sent',\\\\n      createdAt: new Date()\\\\n    };\\\\n\\\\n    await db.collection('messages').insertOne(newMessage);\\\\n\\\\n    // Update conversation's last message timestamp\\\\n    const lastMessagePreview = type === 'text' ? content : `\ud83d\udcce ${type}`;\\\\n    await db.collection('conversations').updateOne(\\\\n      { _id: conversationId },\\\\n      { \\\\n        $set: { \\\\n          lastMessage: lastMessagePreview,\\\\n          updatedAt: new Date() \\\\n        } \\\\n      }\\\\n    );\\\\n\\\\n    return NextResponse.json({ message: newMessage });\\\\n  } catch (error) {\\\\n    console.error('Send message error:', error);\\\\n    return NextResponse.json(\\\\n      { error: 'Internal server error' },\\\\n      { status: 500 }\\\\n    );\\\\n  }\\\\n}\\n    : \\u001b[31;1m       ^\\u001b[0m\\n    `----\\n\\n\\nCaused by:\\n    Syntax Error\\n    at processResult (/app/node_modules/next/dist/compiled/webpack/bundle5.js:28:400590)\\n    at /app/node_modules/next/dist/compiled/webpack/bundle5.js:28:402302\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:8645\\n    at /app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:5019\\n    at r.callback (/app/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:4039)\"},\"gip\":true,\"scriptLoader\":[]}</script></body></html>"
+      "success": true,
+      "message": "File uploaded successfully",
+      "timestamp": "2025-12-28T06:03:07.848129",
+      "response_data": {
+        "url": "/uploads/c7fed14f-f9f7-4710-85fb-b1179916c787.txt",
+        "filename": "test_file.txt",
+        "size": 39,
+        "type": "text/plain"
+      }
+    },
+    {
+      "test": "Upload Response Structure",
+      "success": true,
+      "message": "Upload response has correct structure",
+      "timestamp": "2025-12-28T06:03:07.848154",
+      "response_data": null
     },
     {
       "test": "Send Image Message",
-      "success": false,
-      "message": "Cannot test - Conversation ID or uploaded file URL not available",
-      "timestamp": "2025-12-28T06:02:15.257571",
+      "success": true,
+      "message": "Image message sent successfully",
+      "timestamp": "2025-12-28T06:03:07.861156",
+      "response_data": {
+        "message": {
+          "_id": "84f4f507-f427-445c-a1ba-ca8df934640c",
+          "conversationId": "a693137e-f59e-42fd-b89b-be3e582c373b",
+          "content": "",
+          "type": "image",
+          "mediaUrl": "/uploads/c7fed14f-f9f7-4710-85fb-b1179916c787.txt",
+          "fileName": "test_image.txt",
+          "status": "sent",
+          "createdAt": "2025-12-28T06:03:07.858Z"
+        }
+      }
+    },
+    {
+      "test": "Image Message Structure",
+      "success": true,
+      "message": "Message has correct structure",
+      "timestamp": "2025-12-28T06:03:07.861177",
       "response_data": null
     },
     {
       "test": "Send File Message",
-      "success": false,
-      "message": "Cannot test - Conversation ID or uploaded file URL not available",
-      "timestamp": "2025-12-28T06:02:15.257581",
+      "success": true,
+      "message": "File message sent successfully",
+      "timestamp": "2025-12-28T06:03:07.871825",
+      "response_data": {
+        "message": {
+          "_id": "8bb00f20-35a7-4c36-894b-1a922d0baa55",
+          "conversationId": "a693137e-f59e-42fd-b89b-be3e582c373b",
+          "content": "",
+          "type": "file",
+          "mediaUrl": "/uploads/c7fed14f-f9f7-4710-85fb-b1179916c787.txt",
+          "fileName": "test_document.txt",
+          "fileSize": 1024,
+          "status": "sent",
+          "createdAt": "2025-12-28T06:03:07.868Z"
+        }
+      }
+    },
+    {
+      "test": "File Message Structure",
+      "success": true,
+      "message": "Message has correct structure",
+      "timestamp": "2025-12-28T06:03:07.871847",
       "response_data": null
     },
     {
       "test": "Invalid Registration Data",
       "success": true,
-      "message": "Correctly rejected invalid data with status 520",
-      "timestamp": "2025-12-28T06:02:15.291125",
+      "message": "Correctly rejected invalid data with status 400",
+      "timestamp": "2025-12-28T06:03:07.939596",
       "response_data": null
     },
     {
       "test": "Invalid Conversation Creation",
-      "success": true,
-      "message": "Correctly rejected invalid participant ID with status 520",
-      "timestamp": "2025-12-28T06:02:15.349984",
+      "success": false,
+      "message": "Should have rejected invalid participant ID but returned 200",
+      "timestamp": "2025-12-28T06:03:07.950996",
       "response_data": null
     }
   ]
