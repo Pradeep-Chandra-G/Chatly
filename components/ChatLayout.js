@@ -178,8 +178,15 @@ export default function ChatLayout({ session }) {
       console.error("Socket connection error:", error);
     });
 
+    // CRITICAL FIX: Handle initial online users list
+    socket.on("users:online-list", ({ onlineUsers }) => {
+      console.log("📋 Received online users list:", onlineUsers);
+      setOnlineUsers(new Set(onlineUsers));
+    });
+
+    // CRITICAL FIX: Handle individual user status changes
     socket.on("user:status", ({ userId, status }) => {
-      console.log(`User ${userId} is now ${status}`);
+      console.log(`👤 User ${userId} is now ${status}`);
       setOnlineUsers((prev) => {
         const updated = new Set(prev);
         if (status === "online") {
@@ -187,6 +194,7 @@ export default function ChatLayout({ session }) {
         } else {
           updated.delete(userId);
         }
+        console.log("📊 Updated online users:", Array.from(updated));
         return updated;
       });
     });
@@ -211,7 +219,6 @@ export default function ChatLayout({ session }) {
             return [...prevMessages, message];
           });
 
-          // If message is from someone else and we're viewing the chat, mark as read
           if (message.senderId !== session.user.id) {
             setTimeout(() => {
               socket.emit("message:read", {
@@ -230,8 +237,6 @@ export default function ChatLayout({ session }) {
             }, 100);
           }
         } else if (message.senderId !== session.user.id) {
-          // Message is for a conversation we're not viewing
-          // Mark as delivered since we're online
           setTimeout(() => {
             socket.emit("message:delivered", {
               messageId: message._id,
@@ -256,14 +261,14 @@ export default function ChatLayout({ session }) {
     });
 
     socket.on("message:status", ({ messageId, status }) => {
-      console.log(`Message ${messageId} status: ${status}`);
+      console.log(`📝 Message ${messageId} status: ${status}`);
       setMessages((prev) =>
         prev.map((msg) => (msg._id === messageId ? { ...msg, status } : msg))
       );
     });
 
     socket.on("message:edited", ({ messageId, content, edited, editedAt }) => {
-      console.log("Message edited received:", messageId);
+      console.log("✏️ Message edited received:", messageId, content);
       setMessages((prev) =>
         prev.map((msg) =>
           msg._id === messageId ? { ...msg, content, edited, editedAt } : msg
@@ -272,7 +277,7 @@ export default function ChatLayout({ session }) {
     });
 
     socket.on("user:typing", ({ userId }) => {
-      console.log(`User ${userId} is typing`);
+      console.log(`⌨️ User ${userId} is typing`);
       setIsTyping(true);
     });
 
@@ -304,19 +309,26 @@ export default function ChatLayout({ session }) {
     });
 
     socket.on("call:rejected", ({ callId }) => {
-      toast.error("Call was rejected");
-      setIsCallModalOpen(false);
-      setActiveCall(null);
+      // Only show toast if we were the caller (the one who got rejected)
+      if (activeCall && activeCall._id === callId) {
+        toast.error("Call was rejected");
+        setIsCallModalOpen(false);
+        setActiveCall(null);
+      }
     });
 
     socket.on("call:ended", ({ callId }) => {
-      toast.info("Call ended");
-      setIsCallModalOpen(false);
-      setActiveCall(null);
+      // Only show toast if we didn't end the call ourselves
+      // (the other person ended it)
+      if (activeCall && activeCall._id === callId) {
+        toast.info("Call ended");
+        setIsCallModalOpen(false);
+        setActiveCall(null);
+      }
     });
 
     socket.on("message:reaction-update", ({ messageId, reactions }) => {
-      console.log("Reaction updated for message:", messageId);
+      console.log("👍 Reaction updated for message:", messageId);
       setMessages((prev) =>
         prev.map((msg) => (msg._id === messageId ? { ...msg, reactions } : msg))
       );

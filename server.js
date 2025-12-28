@@ -32,23 +32,44 @@ app.prepare().then(() => {
     pingInterval: 25000,
   });
 
-  const userSockets = new Map();
-  const userConversations = new Map(); // Track which conversations each user has joined
+  const userSockets = new Map(); // userId -> socketId
+  const onlineUsers = new Set(); // Set of currently online userIds
+  const userConversations = new Map(); // userId -> Set of conversationIds
 
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
+    console.log("🔌 User connected:", socket.id);
 
     socket.on("user:online", (userId) => {
+      console.log(`✅ User ${userId} is now online`);
+
+      // Store socket mapping
       userSockets.set(userId, socket.id);
       socket.userId = userId;
       socket.join(userId);
 
-      // Initialize conversation tracking for this user
+      // Add to online users
+      onlineUsers.add(userId);
+
+      // Initialize conversation tracking
       if (!userConversations.has(userId)) {
         userConversations.set(userId, new Set());
       }
 
-      io.emit("user:status", { userId, status: "online" });
+      // CRITICAL FIX 1: Send current online users to the newly connected user
+      socket.emit("users:online-list", {
+        onlineUsers: Array.from(onlineUsers),
+      });
+      console.log(
+        `📋 Sent online users list to ${userId}:`,
+        Array.from(onlineUsers)
+      );
+
+      // CRITICAL FIX 2: Broadcast this user's online status to ALL other users
+      socket.broadcast.emit("user:status", {
+        userId,
+        status: "online",
+      });
+      console.log(`📢 Broadcasted ${userId} online status to all users`);
     });
 
     // Handle ping to keep connection alive
@@ -69,53 +90,47 @@ app.prepare().then(() => {
     socket.on("conversation:join", (conversationId) => {
       socket.join(conversationId);
 
-      // Track that this user has joined this conversation
       if (socket.userId && userConversations.has(socket.userId)) {
         userConversations.get(socket.userId).add(conversationId);
       }
 
       console.log(
-        `User ${socket.userId} joined conversation ${conversationId}`
+        `💬 User ${socket.userId} joined conversation ${conversationId}`
       );
     });
 
     socket.on("conversation:leave", (conversationId) => {
       socket.leave(conversationId);
 
-      // Remove from tracking
       if (socket.userId && userConversations.has(socket.userId)) {
         userConversations.get(socket.userId).delete(conversationId);
       }
 
-      console.log(`User ${socket.userId} left conversation ${conversationId}`);
+      console.log(
+        `👋 User ${socket.userId} left conversation ${conversationId}`
+      );
     });
 
     socket.on("message:send", (data) => {
       console.log(
-        "Message sent:",
+        "📤 Message sent:",
         data._id,
         "to conversation:",
         data.conversationId
       );
 
-      // Broadcast to conversation room
       io.to(data.conversationId).emit("message:new", data);
 
-      // Check if any online users in this conversation have it open
-      // and automatically mark as delivered
       const conversationSockets = io.sockets.adapter.rooms.get(
         data.conversationId
       );
 
       if (conversationSockets && conversationSockets.size > 1) {
-        // More than just the sender is in the room
-        // Mark as delivered immediately for online users
         console.log(
-          "Message delivered to online users in conversation:",
+          "✅ Message delivered to online users in conversation:",
           data.conversationId
         );
 
-        // Emit delivered status back to the conversation
         setTimeout(() => {
           io.to(data.conversationId).emit("message:status", {
             messageId: data._id,
@@ -142,9 +157,8 @@ app.prepare().then(() => {
     socket.on(
       "message:edit",
       ({ messageId, conversationId, content, edited, editedAt }) => {
-        console.log("Message edited:", messageId);
+        console.log("✏️ Message edited:", messageId);
 
-        // Broadcast the edit to all users in the conversation
         io.to(conversationId).emit("message:edited", {
           messageId,
           content,
@@ -201,7 +215,7 @@ app.prepare().then(() => {
     socket.on(
       "message:reaction",
       ({ messageId, conversationId, reactions }) => {
-        console.log("Reaction updated for message:", messageId);
+        console.log("👍 Reaction updated for message:", messageId);
         io.to(conversationId).emit("message:reaction-update", {
           messageId,
           reactions,
@@ -209,20 +223,25 @@ app.prepare().then(() => {
       }
     );
 
-    socket.on("message:reaction-update", ({ messageId, reactions }) => {
-      console.log("Reaction updated for message:", messageId);
-      setMessages((prev) =>
-        prev.map((msg) => (msg._id === messageId ? { ...msg, reactions } : msg))
-      );
-    });
-
     socket.on("disconnect", () => {
       if (socket.userId) {
+        console.log(`❌ User ${socket.userId} disconnected`);
+
+        // CRITICAL FIX 3: Clean up properly
         userSockets.delete(socket.userId);
+        onlineUsers.delete(socket.userId);
         userConversations.delete(socket.userId);
-        io.emit("user:status", { userId: socket.userId, status: "offline" });
+
+        // Broadcast offline status to ALL users
+        io.emit("user:status", {
+          userId: socket.userId,
+          status: "offline",
+        });
+        console.log(
+          `📢 Broadcasted ${socket.userId} offline status to all users`
+        );
       }
-      console.log("User disconnected:", socket.id);
+      console.log("🔌 Socket disconnected:", socket.id);
     });
   });
 

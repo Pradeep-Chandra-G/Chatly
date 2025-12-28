@@ -312,8 +312,8 @@ export default function CallModal({
         body: JSON.stringify({ callId: call._id, status: "active" }),
       });
 
+      // Don't show toast here - it will be shown when both peers connect
       setCallStatus("connected");
-      toast.success("Call connected");
     } catch (error) {
       console.error("❌ Error answering call:", error);
       if (error.name === "NotAllowedError") {
@@ -486,6 +486,7 @@ export default function CallModal({
       body: JSON.stringify({ callId: call._id, status: "rejected" }),
     });
 
+    // Clean up and close (person rejecting doesn't need a toast notification)
     cleanup();
     onClose();
   };
@@ -493,17 +494,21 @@ export default function CallModal({
   const endCall = () => {
     console.log("🔴 Ending call");
     const targetId = isIncoming ? call.callerId : call.receiverId;
+
+    // Emit to the other person
     socket.emit("call:end", {
       callId: call._id,
       targetId,
     });
 
+    // Update database
     fetch("/api/calls", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ callId: call._id, status: "ended" }),
     });
 
+    // Clean up and close (don't show toast here - the person ending doesn't need a notification)
     cleanup();
     onClose();
   };
