@@ -262,12 +262,29 @@ export default function ChatLayout({ session }) {
 
       const data = await response.json();
       if (response.ok) {
-        // Emit to socket
-        socket.emit('message:send', data.message);
-        setMessages((prev) => [...prev, data.message]);
+        console.log('✅ Message sent to API:', data.message);
+        
+        // Add to local state immediately
+        setMessages((prev) => {
+          // Avoid duplicates
+          if (prev.some(m => m._id === data.message._id)) {
+            return prev;
+          }
+          return [...prev, data.message];
+        });
+        
+        // Emit to socket if connected
+        if (socket && socket.connected) {
+          console.log('📤 Emitting message to socket');
+          socket.emit('message:send', data.message);
+        } else {
+          console.warn('⚠️ Socket not connected, message not broadcasted');
+        }
+        
         loadConversations();
       }
     } catch (error) {
+      console.error('Message send error:', error);
       toast.error('Failed to send message');
     }
   };
