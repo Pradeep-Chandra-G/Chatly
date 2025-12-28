@@ -1,6 +1,6 @@
 # WhatsApp Clone - Encrypted Instant Messaging
 
-A fully functional, open-source WhatsApp clone with real-time messaging, built for self-hosting.
+A fully functional, open-source WhatsApp clone with real-time messaging, group chats, voice/video calling, and media sharing - built for self-hosting.
 
 ## 🚀 Features Implemented
 
@@ -21,6 +21,66 @@ A fully functional, open-source WhatsApp clone with real-time messaging, built f
 - Automatic reconnection handling
 - Message persistence in MongoDB
 
+### ✅ Phase 2: Group Messaging (COMPLETE)
+
+**Group Conversations:**
+- Create groups with multiple members
+- Group admin permissions and controls
+- Add/remove members (admin only)
+- Group avatars (auto-generated)
+- Group member count display
+- Real-time group message broadcasting
+
+**Group Management:**
+- POST `/api/groups` - Create new group
+- POST `/api/groups/{groupId}/members` - Add member
+- DELETE `/api/groups/{groupId}/members` - Remove member
+- Admin-only member management
+- Automatic participant tracking
+
+### ✅ Phase 3: WebRTC Voice & Video Calling (COMPLETE)
+
+**Real-time Calling:**
+- Voice calling (1-on-1)
+- Video calling (1-on-1)
+- WebRTC peer-to-peer connection
+- STUN server integration
+- Call signaling via Socket.io
+
+**Call Features:**
+- Incoming call notifications
+- Call accept/reject
+- Mute/unmute audio
+- Video on/off toggle
+- End call functionality
+- Call history tracking in database
+
+**Call API:**
+- POST `/api/calls` - Initiate call
+- PATCH `/api/calls` - Update call status
+- Real-time signaling events (offer, answer, ICE candidates)
+
+### ✅ Phase 4: Media Sharing (COMPLETE)
+
+**File Upload & Sharing:**
+- Image upload and preview
+- Document/file sharing
+- File size validation (max 10MB)
+- Local storage in `/public/uploads`
+- Download functionality
+
+**Media Message Types:**
+- `text` - Regular text messages
+- `image` - Image files (with preview)
+- `file` - Documents (with download link)
+- Media metadata (filename, size, type)
+
+**Media API:**
+- POST `/api/upload` - Upload files
+- Supports images and documents
+- Automatic file naming (UUID-based)
+- Secure file storage
+
 **User Interface:**
 - Beautiful, responsive design with Tailwind CSS + shadcn/ui
 - WhatsApp-like layout (sidebar + chat area)
@@ -30,6 +90,11 @@ A fully functional, open-source WhatsApp clone with real-time messaging, built f
 - Read receipts (checkmarks)
 - Avatar generation (DiceBear)
 - Dark mode support ready
+- Group indicators
+- Call buttons (phone & video icons)
+- Media upload button with dropdown
+- Image previews in chat
+- File download cards
 
 **Backend APIs:**
 - `/api/auth/register` - User registration
