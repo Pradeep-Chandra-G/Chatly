@@ -14,7 +14,7 @@ Visit: https://securesync-5.preview.emergentagent.com
 3. Click "Create account"
 
 ### 3. Create a Second User (for testing)
-Open an incognito/private window and create another user to test messaging.
+Open an incognito/private window and create another user to test messaging and calls.
 
 ### 4. Start Chatting
 1. Log in with your first user
@@ -24,7 +24,7 @@ Open an incognito/private window and create another user to test messaging.
 
 ## Features to Test
 
-### ✅ Real-time Messaging
+### ✅ Real-time 1-on-1 Messaging
 - Open two browser windows (one regular, one incognito)
 - Log in as different users
 - Send messages back and forth
@@ -44,6 +44,33 @@ Watch the checkmarks:
 - User avatars show green dot when online
 - Status updates in real-time
 
+### ✅ Group Chats
+1. Click the group icon (👥) in the sidebar
+2. Enter a group name
+3. Select multiple members to add
+4. Start chatting with the whole group!
+5. Only the group creator (admin) can add/remove members
+
+### ✅ Voice & Video Calls
+1. Open a 1-on-1 conversation
+2. Click the phone icon (📞) for voice call
+3. Click the video icon (📹) for video call
+4. Accept the call in the other window
+5. During call:
+   - Toggle mute/unmute
+   - Toggle video on/off (for video calls)
+   - End call
+
+**Note:** Browser may ask for microphone/camera permissions - click Allow
+
+### ✅ Media Sharing
+1. Click the paperclip icon (📎) next to message input
+2. Choose "Image" or "Document"
+3. Select a file (max 10MB)
+4. File uploads and sends automatically
+5. Click images to view full size
+6. Click download icon on files to download
+
 ### ✅ User Search
 - Use the search bar to find users
 - Search by name or email
@@ -57,55 +84,46 @@ Watch the checkmarks:
 ✅ Typing indicators
 ✅ Conversation history
 ✅ User search and discovery
+✅ Group chat creation
+✅ Group member management
+✅ Voice calling (WebRTC)
+✅ Video calling (WebRTC)
+✅ Image sharing
+✅ Document sharing
 ✅ Responsive design
 ✅ Socket.io real-time updates
 
-## Next Features to Build
+## Advanced Features
 
-The foundation is complete! Here's what can be added next:
+### Group Management
+- **Create Group:** Click 👥 icon, name group, select members
+- **Group Info:** See member count in chat header
+- **Admin Controls:** Only admin can add/remove members
+- **Group Messages:** All members receive messages in real-time
 
-### 🔜 Group Messaging
-- Create groups with multiple users
-- Group admin controls
-- Add/remove members
+### Call Features
+- **Voice Calls:** Crystal clear audio with WebRTC
+- **Video Calls:** HD video with local preview
+- **Call Controls:** Mute, video toggle, end call
+- **Call Notifications:** See incoming calls with accept/reject options
+- **Call History:** All calls tracked in database
 
-### 🔜 Voice & Video Calls (WebRTC)
-- 1-on-1 voice calling
-- 1-on-1 video calling
-- Call notifications
+### Media Features
+- **Image Upload:** Share photos with preview in chat
+- **File Upload:** Share documents with download capability
+- **File Info:** See filename and size
+- **Max Size:** 10MB per file
+- **Supported Formats:** 
+  - Images: JPG, PNG, GIF, WebP
+  - Documents: PDF, DOC, DOCX, TXT, ZIP
 
-### 🔜 Media Sharing
-- Share images
-- Share files
-- Send voice messages
-- Share videos
+## Tips & Tricks
 
-### 🔜 Advanced Features
-- Message reactions (emoji)
-- Message replies/quotes
-- Message editing
-- Message deletion
-- End-to-end encryption (E2E)
-- Push notifications
-- Message search
-- Chat export
-
-## Google OAuth Setup (Optional)
-
-Want to enable Google login?
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create a new project
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URI: `https://your-domain.com/api/auth/callback/google`
-6. Add credentials to `.env`:
-```
-GOOGLE_CLIENT_ID=your-client-id-here
-GOOGLE_CLIENT_SECRET=your-client-secret-here
-NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED=true
-```
-7. Restart the server
+1. **Test Calls:** Use headphones to prevent echo during testing
+2. **Multiple Users:** Use different browsers (Chrome + Firefox) or incognito windows
+3. **File Size:** Keep files under 10MB for best performance
+4. **Group Chats:** Test with 3+ users for full experience
+5. **Mobile:** Works great on mobile browsers too!
 
 ## Troubleshooting
 
@@ -123,6 +141,19 @@ NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED=true
 - Check server logs: `tail -f /var/log/supervisor/nextjs.out.log`
 - Verify WebSocket support
 - Try a different browser
+
+### Calls not working?
+- Grant microphone/camera permissions
+- Check browser supports WebRTC (Chrome, Firefox, Edge, Safari)
+- Ensure both users are in a 1-on-1 conversation (calls don't work in groups yet)
+- Try refreshing the page
+- Check firewall settings
+
+### File upload failing?
+- Ensure file is under 10MB
+- Check supported file formats
+- Verify server storage is available
+- Try a smaller file first
 
 ## Self-Hosting
 
