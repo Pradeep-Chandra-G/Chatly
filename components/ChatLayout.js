@@ -111,24 +111,30 @@ export default function ChatLayout({ session }) {
     socket.on('message:new', (message) => {
       console.log('📨 New message received:', message);
       
-      // Always update messages if it's for the current conversation
-      setMessages((prevMessages) => {
-        // Avoid duplicates
-        if (prevMessages.some(m => m._id === message._id)) {
-          return prevMessages;
+      // Only update messages if it's for the currently selected conversation
+      setSelectedConversation((currentConv) => {
+        if (currentConv && message.conversationId === currentConv._id) {
+          setMessages((prevMessages) => {
+            // Avoid duplicates
+            if (prevMessages.some(m => m._id === message._id)) {
+              return prevMessages;
+            }
+            return [...prevMessages, message];
+          });
+          
+          // Send delivered status if message is not from us
+          if (message.senderId !== session.user.id) {
+            socket.emit('message:delivered', {
+              messageId: message._id,
+              conversationId: message.conversationId
+            });
+          }
         }
-        return [...prevMessages, message];
+        
+        return currentConv;
       });
       
-      // Send delivered status if message is not from us
-      if (message.senderId !== session.user.id) {
-        socket.emit('message:delivered', {
-          messageId: message._id,
-          conversationId: message.conversationId
-        });
-      }
-      
-      // Update conversation list
+      // Always update conversation list to show new message preview
       loadConversations();
     });
 
