@@ -304,17 +304,38 @@ export default function CallModal({
   const createPeerConnection = () => {
     const configuration = {
       iceServers: [
+        // STUN servers for public IP discovery
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' }
+        // Public TURN servers (free, limited bandwidth)
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        }
       ],
-      iceCandidatePoolSize: 10
+      iceTransportPolicy: 'all', // Use all available candidates
+      iceCandidatePoolSize: 10,
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require'
     };
 
     console.log('🔧 Creating peer connection with config:', configuration);
     const peerConnection = new RTCPeerConnection(configuration);
+
+    // Store peer connection immediately
+    peerConnectionRef.current = peerConnection;
 
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
