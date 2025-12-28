@@ -264,14 +264,39 @@ export default function CallModal({
           targetId,
           candidate: event.candidate
         });
+      } else {
+        console.log('🧊 All ICE candidates have been sent');
       }
     };
 
     peerConnection.ontrack = (event) => {
-      console.log('🎵 Remote track received:', event.track.kind);
-      if (remoteVideoRef.current && event.streams[0]) {
-        console.log('✅ Setting remote stream');
-        remoteVideoRef.current.srcObject = event.streams[0];
+      console.log('🎵 Remote track received:', event.track.kind, 'streams:', event.streams.length);
+      
+      if (event.streams && event.streams[0]) {
+        console.log('✅ Setting remote stream to video/audio element');
+        
+        // Force play the remote stream
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = event.streams[0];
+          
+          // Try to play (especially important for mobile)
+          const playPromise = remoteVideoRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log('✅ Remote stream playing successfully');
+              })
+              .catch((error) => {
+                console.error('❌ Error playing remote stream:', error);
+                // Try again after a short delay
+                setTimeout(() => {
+                  remoteVideoRef.current?.play();
+                }, 100);
+              });
+          }
+        }
+      } else {
+        console.warn('⚠️ No streams in track event');
       }
     };
 
@@ -280,9 +305,10 @@ export default function CallModal({
       if (peerConnection.iceConnectionState === 'connected') {
         setCallStatus('connected');
         toast.success('Call connected');
-      } else if (peerConnection.iceConnectionState === 'disconnected' || 
-                 peerConnection.iceConnectionState === 'failed') {
-        toast.error('Connection lost');
+      } else if (peerConnection.iceConnectionState === 'disconnected') {
+        toast.warning('Connection interrupted...');
+      } else if (peerConnection.iceConnectionState === 'failed') {
+        toast.error('Connection failed');
         endCall();
       }
     };
@@ -295,6 +321,14 @@ export default function CallModal({
                  peerConnection.connectionState === 'failed') {
         endCall();
       }
+    };
+
+    peerConnection.onsignalingstatechange = () => {
+      console.log('📡 Signaling state:', peerConnection.signalingState);
+    };
+
+    peerConnection.onicegatheringstatechange = () => {
+      console.log('🧊 ICE gathering state:', peerConnection.iceGatheringState);
     };
 
     return peerConnection;
