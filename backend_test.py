@@ -751,6 +751,23 @@ class WhatsAppCloneAPITester:
         self.test_get_messages()
         self.test_update_message_status()
         
+        # Phase 2: Group Messaging tests
+        self.test_create_group()
+        self.test_add_group_member()
+        self.test_remove_group_member()
+        self.test_group_admin_permissions()
+        
+        # Phase 3: WebRTC Calling tests
+        self.test_create_voice_call()
+        self.test_create_video_call()
+        self.test_update_call_status_active()
+        self.test_update_call_status_ended()
+        
+        # Phase 4: Media Sharing tests
+        self.test_file_upload()
+        self.test_send_image_message()
+        self.test_send_file_message()
+        
         # Error handling tests
         self.test_error_cases()
         
