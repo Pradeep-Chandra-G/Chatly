@@ -525,7 +525,6 @@ export default function CallModal({
     }
 
     iceCandidatesQueue.current = [];
-    isInitialized.current = false;
   };
 
   const getStatusText = () => {
