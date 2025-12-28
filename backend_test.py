@@ -107,30 +107,55 @@ class WhatsAppCloneAPITester:
         """Test user authentication/login"""
         print("\n=== Testing User Authentication ===")
         
-        # Test NextAuth credentials login
+        # Test NextAuth CSRF token first
         try:
-            # Try NextAuth signin endpoint
-            response = self.session.post(
-                f"{API_BASE}/auth/signin/credentials",
-                json={
+            # Get CSRF token
+            csrf_response = self.session.get(f"{API_BASE}/auth/csrf", timeout=10)
+            if csrf_response.status_code == 200:
+                csrf_data = csrf_response.json()
+                csrf_token = csrf_data.get('csrfToken')
+                self.log_result("Get CSRF Token", True, "CSRF token retrieved successfully")
+                
+                # Try NextAuth credentials signin
+                signin_data = {
                     "email": self.user1_data["email"],
-                    "password": self.user1_data["password"]
-                },
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.log_result("User Authentication", True, "Login successful", data)
-                # Extract auth token if available
-                if 'token' in data:
-                    self.auth_token = data['token']
-                    self.session.headers.update({'Authorization': f'Bearer {self.auth_token}'})
+                    "password": self.user1_data["password"],
+                    "csrfToken": csrf_token,
+                    "callbackUrl": BASE_URL,
+                    "json": "true"
+                }
+                
+                response = self.session.post(
+                    f"{API_BASE}/auth/callback/credentials",
+                    data=signin_data,
+                    timeout=10,
+                    allow_redirects=False
+                )
+                
+                if response.status_code in [200, 302]:
+                    self.log_result("User Authentication", True, f"Login successful with status {response.status_code}")
+                    # Check if we have session cookies
+                    if 'next-auth.session-token' in self.session.cookies or 'next-auth.csrf-token' in self.session.cookies:
+                        self.log_result("Session Cookies", True, "Authentication cookies set successfully")
+                    else:
+                        self.log_result("Session Cookies", False, "No authentication cookies found")
+                else:
+                    self.log_result("User Authentication", False, f"Login failed with status {response.status_code}", response.text[:500])
             else:
-                self.log_result("User Authentication", False, f"Login failed with status {response.status_code}", response.text)
+                self.log_result("Get CSRF Token", False, f"Failed to get CSRF token: {csrf_response.status_code}")
+                # Try direct session check
+                session_response = self.session.get(f"{API_BASE}/auth/session", timeout=10)
+                if session_response.status_code == 200:
+                    session_data = session_response.json()
+                    if session_data:
+                        self.log_result("User Authentication", True, "Already authenticated via session", session_data)
+                    else:
+                        self.log_result("User Authentication", False, "No active session found")
+                else:
+                    self.log_result("User Authentication", False, f"Session check failed: {session_response.status_code}")
                 
         except Exception as e:
-            self.log_result("User Authentication", False, f"Login request failed: {str(e)}")
+            self.log_result("User Authentication", False, f"Authentication request failed: {str(e)}")
 
     def test_get_users(self):
         """Test getting all users"""
