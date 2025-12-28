@@ -362,24 +362,34 @@ export default function CallModal({
       if (event.streams && event.streams[0]) {
         console.log('✅ Setting remote stream to video/audio element');
         
-        // Force play the remote stream
+        // Set the remote stream
         if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0];
+          const element = remoteVideoRef.current;
           
-          // Try to play (especially important for mobile)
-          const playPromise = remoteVideoRef.current.play();
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                console.log('✅ Remote stream playing successfully');
-              })
-              .catch((error) => {
-                console.error('❌ Error playing remote stream:', error);
-                // Try again after a short delay
-                setTimeout(() => {
-                  remoteVideoRef.current?.play();
-                }, 100);
-              });
+          // Check if srcObject is already set to avoid interruption
+          if (element.srcObject !== event.streams[0]) {
+            element.srcObject = event.streams[0];
+            
+            // Properly handle play() promise
+            const playPromise = element.play();
+            
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => {
+                  console.log('✅ Remote stream playing successfully');
+                })
+                .catch((error) => {
+                  console.error('❌ Error playing remote stream:', error);
+                  // Retry after a short delay
+                  setTimeout(() => {
+                    if (element.srcObject) {
+                      element.play().catch(e => console.log('Retry failed:', e));
+                    }
+                  }, 500);
+                });
+            }
+          } else {
+            console.log('Stream already set, skipping to avoid interruption');
           }
         }
       } else {
