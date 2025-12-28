@@ -422,16 +422,25 @@ export default function ChatLayout({ session }) {
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <Avatar>
-                        <AvatarImage src={other?.avatar} />
-                        <AvatarFallback>{other?.name?.[0]}</AvatarFallback>
+                        <AvatarImage src={conv.type === 'group' ? conv.avatar : other?.avatar} />
+                        <AvatarFallback>
+                          {conv.type === 'group' ? conv.name?.[0] : other?.name?.[0]}
+                        </AvatarFallback>
                       </Avatar>
-                      {isOnline && (
+                      {conv.type === 'direct' && isOnline && (
                         <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold truncate">{other?.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold truncate">
+                            {conv.type === 'group' ? conv.name : other?.name}
+                          </h3>
+                          {conv.type === 'group' && (
+                            <Users className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
                         <span className="text-xs text-muted-foreground">
                           {conv.updatedAt && new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
