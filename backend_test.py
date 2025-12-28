@@ -32,6 +32,9 @@ class WhatsAppCloneAPITester:
         self.user2_id = None
         self.conversation_id = None
         self.message_id = None
+        self.group_id = None
+        self.call_id = None
+        self.uploaded_file_url = None
 
     def log_result(self, test_name, success, message, response_data=None):
         """Log test result"""
