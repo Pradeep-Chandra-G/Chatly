@@ -7,7 +7,7 @@
     "dev:no-reload": "node server.js",
     "dev:webpack": "node server.js",
     "build": "next build",
-    "start": "node .next/standalone/server.js"
+    "start": "NODE_ENV=production node server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
