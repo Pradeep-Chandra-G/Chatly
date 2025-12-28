@@ -29,31 +29,23 @@ export default function CallModal({
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
   const iceCandidatesQueue = useRef([]);
-  const isInitialized = useRef(false); // Prevent double initialization
 
   useEffect(() => {
-    if (!isOpen || !call || isInitialized.current) return;
+    if (!isOpen || !call) return;
 
     console.log('📞 Call modal opened', { call, isIncoming });
-    isInitialized.current = true;
 
     if (isIncoming) {
       setCallStatus('ringing');
     } else {
-      // Delay call initiation slightly to ensure DOM is ready
-      const timer = setTimeout(() => {
-        initiateCall();
-      }, 100);
-      return () => clearTimeout(timer);
+      // Initiate call immediately
+      initiateCall();
     }
 
     return () => {
-      if (isOpen) {
-        cleanup();
-        isInitialized.current = false;
-      }
+      cleanup();
     };
-  }, [isOpen, call]);
+  }, [isOpen, call?._id]); // Only re-run when callId changes
 
   useEffect(() => {
     if (!socket) return;
