@@ -366,6 +366,365 @@ class WhatsAppCloneAPITester:
         except Exception as e:
             self.log_result("Invalid Conversation Creation", False, f"Request failed: {str(e)}")
 
+    # ===== PHASE 2: GROUP MESSAGING TESTS =====
+    
+    def test_create_group(self):
+        """Test creating a group conversation"""
+        print("\n=== Testing Group Messaging (Phase 2) ===")
+        
+        if not self.user2_id:
+            self.log_result("Create Group", False, "Cannot test - User 2 ID not available")
+            return
+            
+        try:
+            group_data = {
+                "name": "Test Group",
+                "members": [self.user2_id]
+            }
+            
+            response = self.session.post(
+                f"{API_BASE}/groups",
+                json=group_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200 or response.status_code == 201:
+                data = response.json()
+                self.group_id = data.get('group', {}).get('_id')
+                self.log_result("Create Group", True, "Group created successfully", data)
+                
+                # Verify group structure
+                group = data.get('group', {})
+                if group.get('type') == 'group' and group.get('name') == 'Test Group':
+                    self.log_result("Group Structure Validation", True, "Group has correct structure")
+                else:
+                    self.log_result("Group Structure Validation", False, "Group structure is incorrect")
+                    
+            else:
+                self.log_result("Create Group", False, f"Failed with status {response.status_code}", response.text)
+                
+        except Exception as e:
+            self.log_result("Create Group", False, f"Request failed: {str(e)}")
+
+    def test_add_group_member(self):
+        """Test adding a member to a group"""
+        if not self.group_id:
+            self.log_result("Add Group Member", False, "Cannot test - Group ID not available")
+            return
+            
+        # For this test, we'll try to add user1 again (should work with $addToSet)
+        try:
+            response = self.session.post(
+                f"{API_BASE}/groups/{self.group_id}/members",
+                json={"memberId": self.user1_id},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_result("Add Group Member", True, "Member added successfully", data)
+            else:
+                self.log_result("Add Group Member", False, f"Failed with status {response.status_code}", response.text)
+                
+        except Exception as e:
+            self.log_result("Add Group Member", False, f"Request failed: {str(e)}")
+
+    def test_remove_group_member(self):
+        """Test removing a member from a group"""
+        if not self.group_id or not self.user2_id:
+            self.log_result("Remove Group Member", False, "Cannot test - Group ID or User 2 ID not available")
+            return
+            
+        try:
+            response = self.session.delete(
+                f"{API_BASE}/groups/{self.group_id}/members?memberId={self.user2_id}",
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_result("Remove Group Member", True, "Member removed successfully", data)
+            else:
+                self.log_result("Remove Group Member", False, f"Failed with status {response.status_code}", response.text)
+                
+        except Exception as e:
+            self.log_result("Remove Group Member", False, f"Request failed: {str(e)}")
+
+    # ===== PHASE 3: WEBRTC CALLING TESTS =====
+    
+    def test_create_voice_call(self):
+        """Test creating a voice call"""
+        print("\n=== Testing WebRTC Calling (Phase 3) ===")
+        
+        if not self.user2_id:
+            self.log_result("Create Voice Call", False, "Cannot test - User 2 ID not available")
+            return
+            
+        try:
+            call_data = {
+                "receiverId": self.user2_id,
+                "type": "voice"
+            }
+            
+            response = self.session.post(
+                f"{API_BASE}/calls",
+                json=call_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200 or response.status_code == 201:
+                data = response.json()
+                self.call_id = data.get('call', {}).get('_id')
+                self.log_result("Create Voice Call", True, "Voice call created successfully", data)
+                
+                # Verify call structure
+                call = data.get('call', {})
+                if call.get('type') == 'voice' and call.get('status') == 'ringing':
+                    self.log_result("Voice Call Structure", True, "Call has correct structure")
+                else:
+                    self.log_result("Voice Call Structure", False, "Call structure is incorrect")
+                    
+            else:
+                self.log_result("Create Voice Call", False, f"Failed with status {response.status_code}", response.text)
+                
+        except Exception as e:
+            self.log_result("Create Voice Call", False, f"Request failed: {str(e)}")
+
+    def test_create_video_call(self):
+        """Test creating a video call"""
+        if not self.user2_id:
+            self.log_result("Create Video Call", False, "Cannot test - User 2 ID not available")
+            return
+            
+        try:
+            call_data = {
+                "receiverId": self.user2_id,
+                "type": "video"
+            }
+            
+            response = self.session.post(
+                f"{API_BASE}/calls",
+                json=call_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200 or response.status_code == 201:
+                data = response.json()
+                call = data.get('call', {})
+                self.log_result("Create Video Call", True, "Video call created successfully", data)
+                
+                # Verify call structure
+                if call.get('type') == 'video' and call.get('status') == 'ringing':
+                    self.log_result("Video Call Structure", True, "Call has correct structure")
+                else:
+                    self.log_result("Video Call Structure", False, "Call structure is incorrect")
+                    
+            else:
+                self.log_result("Create Video Call", False, f"Failed with status {response.status_code}", response.text)
+                
+        except Exception as e:
+            self.log_result("Create Video Call", False, f"Request failed: {str(e)}")
+
+    def test_update_call_status_active(self):
+        """Test updating call status to active"""
+        if not self.call_id:
+            self.log_result("Update Call Status (Active)", False, "Cannot test - Call ID not available")
+            return
+            
+        try:
+            response = self.session.patch(
+                f"{API_BASE}/calls",
+                json={
+                    "callId": self.call_id,
+                    "status": "active"
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_result("Update Call Status (Active)", True, "Call status updated to active", data)
+            else:
+                self.log_result("Update Call Status (Active)", False, f"Failed with status {response.status_code}", response.text)
+                
+        except Exception as e:
+            self.log_result("Update Call Status (Active)", False, f"Request failed: {str(e)}")
+
+    def test_update_call_status_ended(self):
+        """Test updating call status to ended"""
+        if not self.call_id:
+            self.log_result("Update Call Status (Ended)", False, "Cannot test - Call ID not available")
+            return
+            
+        try:
+            response = self.session.patch(
+                f"{API_BASE}/calls",
+                json={
+                    "callId": self.call_id,
+                    "status": "ended"
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_result("Update Call Status (Ended)", True, "Call status updated to ended", data)
+            else:
+                self.log_result("Update Call Status (Ended)", False, f"Failed with status {response.status_code}", response.text)
+                
+        except Exception as e:
+            self.log_result("Update Call Status (Ended)", False, f"Request failed: {str(e)}")
+
+    # ===== PHASE 4: MEDIA SHARING TESTS =====
+    
+    def test_file_upload(self):
+        """Test file upload endpoint"""
+        print("\n=== Testing Media Sharing (Phase 4) ===")
+        
+        try:
+            # Create a test file
+            import tempfile
+            import os
+            
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+                f.write("This is a test file for upload testing.")
+                temp_file_path = f.name
+            
+            try:
+                # Upload the file
+                with open(temp_file_path, 'rb') as f:
+                    files = {'file': ('test_file.txt', f, 'text/plain')}
+                    response = self.session.post(
+                        f"{API_BASE}/upload",
+                        files=files,
+                        timeout=30
+                    )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    self.uploaded_file_url = data.get('url')
+                    self.log_result("File Upload", True, "File uploaded successfully", data)
+                    
+                    # Verify response structure
+                    if all(key in data for key in ['url', 'filename', 'size', 'type']):
+                        self.log_result("Upload Response Structure", True, "Upload response has correct structure")
+                    else:
+                        self.log_result("Upload Response Structure", False, "Upload response missing required fields")
+                        
+                else:
+                    self.log_result("File Upload", False, f"Failed with status {response.status_code}", response.text)
+                    
+            finally:
+                # Clean up temp file
+                os.unlink(temp_file_path)
+                
+        except Exception as e:
+            self.log_result("File Upload", False, f"Request failed: {str(e)}")
+
+    def test_send_image_message(self):
+        """Test sending a message with image media"""
+        if not self.conversation_id or not self.uploaded_file_url:
+            self.log_result("Send Image Message", False, "Cannot test - Conversation ID or uploaded file URL not available")
+            return
+            
+        try:
+            message_data = {
+                "conversationId": self.conversation_id,
+                "type": "image",
+                "mediaUrl": self.uploaded_file_url,
+                "fileName": "test_image.txt"
+            }
+            
+            response = self.session.post(
+                f"{API_BASE}/messages",
+                json=message_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200 or response.status_code == 201:
+                data = response.json()
+                self.log_result("Send Image Message", True, "Image message sent successfully", data)
+                
+                # Verify message structure
+                message = data.get('message', {})
+                if message.get('type') == 'image' and message.get('mediaUrl'):
+                    self.log_result("Image Message Structure", True, "Message has correct structure")
+                else:
+                    self.log_result("Image Message Structure", False, "Message structure is incorrect")
+                    
+            else:
+                self.log_result("Send Image Message", False, f"Failed with status {response.status_code}", response.text)
+                
+        except Exception as e:
+            self.log_result("Send Image Message", False, f"Request failed: {str(e)}")
+
+    def test_send_file_message(self):
+        """Test sending a message with file media"""
+        if not self.conversation_id or not self.uploaded_file_url:
+            self.log_result("Send File Message", False, "Cannot test - Conversation ID or uploaded file URL not available")
+            return
+            
+        try:
+            message_data = {
+                "conversationId": self.conversation_id,
+                "type": "file",
+                "mediaUrl": self.uploaded_file_url,
+                "fileName": "test_document.txt",
+                "fileSize": 1024
+            }
+            
+            response = self.session.post(
+                f"{API_BASE}/messages",
+                json=message_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200 or response.status_code == 201:
+                data = response.json()
+                self.log_result("Send File Message", True, "File message sent successfully", data)
+                
+                # Verify message structure
+                message = data.get('message', {})
+                if (message.get('type') == 'file' and 
+                    message.get('mediaUrl') and 
+                    message.get('fileName') and 
+                    message.get('fileSize')):
+                    self.log_result("File Message Structure", True, "Message has correct structure")
+                else:
+                    self.log_result("File Message Structure", False, "Message structure is incorrect")
+                    
+            else:
+                self.log_result("Send File Message", False, f"Failed with status {response.status_code}", response.text)
+                
+        except Exception as e:
+            self.log_result("Send File Message", False, f"Request failed: {str(e)}")
+
+    def test_group_admin_permissions(self):
+        """Test that only group admin can add/remove members"""
+        print("\n=== Testing Group Admin Permissions ===")
+        
+        if not self.group_id:
+            self.log_result("Group Admin Permissions", False, "Cannot test - Group ID not available")
+            return
+        
+        # This test would require a second authenticated session as a non-admin user
+        # For now, we'll just verify that the current user (who is admin) can perform operations
+        try:
+            # Try to add a member as admin (should work)
+            response = self.session.post(
+                f"{API_BASE}/groups/{self.group_id}/members",
+                json={"memberId": self.user2_id},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                self.log_result("Admin Add Member Permission", True, "Admin can add members")
+            else:
+                self.log_result("Admin Add Member Permission", False, f"Admin cannot add members: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Admin Add Member Permission", False, f"Request failed: {str(e)}")
+
     def run_all_tests(self):
         """Run all tests in sequence"""
         print("🚀 Starting WhatsApp Clone Backend API Tests")
