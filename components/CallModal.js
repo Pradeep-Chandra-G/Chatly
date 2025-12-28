@@ -439,7 +439,11 @@ export default function CallModal({
     };
 
     return peerConnection;
-  };
+  } catch (error) {
+    console.error('❌ Error creating peer connection:', error);
+    throw error;
+  }
+};
 
   const rejectCall = () => {
     console.log('❌ Rejecting call');
