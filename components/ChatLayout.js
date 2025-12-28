@@ -203,7 +203,13 @@ export default function ChatLayout({ session }) {
       loadMessages(selectedConversation._id);
       socket?.emit('conversation:join', selectedConversation._id);
     }
-  }, [selectedConversation]);
+    
+    return () => {
+      if (selectedConversation) {
+        socket?.emit('conversation:leave', selectedConversation._id);
+      }
+    };
+  }, [selectedConversation?._id]);
 
   // Auto-scroll to bottom
   useEffect(() => {
