@@ -53,16 +53,20 @@ export default function ChatLayout({ session }) {
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
-  // Initialize Socket.io
+  // Initialize Socket.io - ONLY ONCE
   useEffect(() => {
+    if (socket && socket.connected) {
+      console.log('Socket already initialized and connected');
+      return;
+    }
+
     socketInitializer();
 
     return () => {
-      if (socket) {
-        socket.disconnect();
-      }
+      // Don't disconnect on cleanup - keep socket alive
+      console.log('Component unmounting, keeping socket alive');
     };
-  }, [session]);
+  }, []);
 
   const socketInitializer = async () => {
     if (socket) {
