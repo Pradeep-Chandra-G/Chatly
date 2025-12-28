@@ -14,12 +14,27 @@ import {
   Search, 
   LogOut, 
   UserPlus,
+  Users,
+  Phone,
+  Video,
   MoreVertical,
   Check,
-  CheckCheck
+  CheckCheck,
+  Image as ImageIcon,
+  FileText,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import NewChatDialog from '@/components/NewChatDialog';
+import CreateGroupDialog from '@/components/CreateGroupDialog';
+import CallModal from '@/components/CallModal';
+import MediaUpload from '@/components/MediaUpload';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 let socket;
 
@@ -31,6 +46,10 @@ export default function ChatLayout({ session }) {
   const [isTyping, setIsTyping] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [activeCall, setActiveCall] = useState(null);
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [isIncomingCall, setIsIncomingCall] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
