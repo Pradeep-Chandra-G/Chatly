@@ -194,20 +194,29 @@ export default function CallModal({
       console.log('📞 Answering call...');
       setCallStatus('connecting');
       
-      // Get user media
+      // Get user media with echo cancellation
       const constraints = {
-        audio: true,
-        video: call.type === 'video'
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        },
+        video: call.type === 'video' ? {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        } : false
       };
       
       console.log('🎥 Requesting media with constraints:', constraints);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('✅ Got local stream:', stream.getTracks().map(t => t.kind));
+      console.log('✅ Got local stream:', stream.getTracks().map(t => `${t.kind} (enabled: ${t.enabled})`));
       
       localStreamRef.current = stream;
       
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
+        await localVideoRef.current.play();
       }
 
       // Create peer connection
@@ -216,27 +225,42 @@ export default function CallModal({
 
       // Add local stream tracks
       stream.getTracks().forEach((track) => {
-        console.log('➕ Adding track to peer connection:', track.kind);
-        peerConnection.addTrack(track, stream);
+        console.log('➕ Adding track to peer connection:', track.kind, track.label);
+        const sender = peerConnection.addTrack(track, stream);
+        console.log('✅ Track added, sender:', sender);
       });
 
-      // Set remote description from offer
+      // Set remote description from offer FIRST
       if (call.offer) {
         console.log('📝 Setting remote description from offer');
         await peerConnection.setRemoteDescription(new RTCSessionDescription(call.offer));
+        console.log('✅ Remote description set, signaling state:', peerConnection.signalingState);
+      } else {
+        throw new Error('No offer received');
       }
 
-      // Process queued ICE candidates
+      // Process queued ICE candidates after setting remote description
+      console.log('🧊 Processing', iceCandidatesQueue.current.length, 'queued ICE candidates');
       while (iceCandidatesQueue.current.length > 0) {
         const candidate = iceCandidatesQueue.current.shift();
-        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+          console.log('✅ Added queued ICE candidate');
+        } catch (error) {
+          console.error('❌ Error adding queued ICE candidate:', error);
+        }
       }
+
+      // Wait a bit for tracks to settle
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Create and send answer
       console.log('📝 Creating answer...');
       const answer = await peerConnection.createAnswer();
+      console.log('📝 Answer created:', answer.type);
+      
       await peerConnection.setLocalDescription(answer);
-      console.log('✅ Local description set');
+      console.log('✅ Local description set, signaling state:', peerConnection.signalingState);
 
       // Send answer through socket
       console.log('📤 Sending answer to caller');
@@ -257,7 +281,13 @@ export default function CallModal({
       toast.success('Call connected');
     } catch (error) {
       console.error('❌ Error answering call:', error);
-      toast.error('Failed to answer call');
+      if (error.name === 'NotAllowedError') {
+        toast.error('Please allow camera/microphone access');
+      } else if (error.name === 'NotFoundError') {
+        toast.error('Camera/microphone not found');
+      } else {
+        toast.error('Failed to answer call');
+      }
       endCall();
     }
   };
