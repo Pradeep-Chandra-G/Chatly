@@ -65,16 +65,38 @@ export default function ChatLayout({ session }) {
   }, [session]);
 
   const socketInitializer = async () => {
+    if (socket) {
+      socket.disconnect();
+    }
+
     socket = io({
-      path: '/socket.io/'
+      path: '/socket.io/',
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
     });
 
     socket.on('connect', () => {
-      console.log('Connected to socket');
+      console.log('✅ Socket connected:', socket.id);
       socket.emit('user:online', session.user.id);
+      
+      // Rejoin conversation room if one is selected
+      if (selectedConversation) {
+        socket.emit('conversation:join', selectedConversation._id);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('❌ Socket disconnected');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
     });
 
     socket.on('user:status', ({ userId, status }) => {
+      console.log(`User ${userId} is now ${status}`);
       setOnlineUsers((prev) => {
         const updated = new Set(prev);
         if (status === 'online') {
@@ -87,9 +109,19 @@ export default function ChatLayout({ session }) {
     });
 
     socket.on('message:new', (message) => {
-      if (selectedConversation && message.conversationId === selectedConversation._id) {
-        setMessages((prev) => [...prev, message]);
-        // Send delivered status
+      console.log('📨 New message received:', message);
+      
+      // Always update messages if it's for the current conversation
+      setMessages((prevMessages) => {
+        // Avoid duplicates
+        if (prevMessages.some(m => m._id === message._id)) {
+          return prevMessages;
+        }
+        return [...prevMessages, message];
+      });
+      
+      // Send delivered status if message is not from us
+      if (message.senderId !== session.user.id) {
         socket.emit('message:delivered', {
           messageId: message._id,
           conversationId: message.conversationId
@@ -101,6 +133,7 @@ export default function ChatLayout({ session }) {
     });
 
     socket.on('message:status', ({ messageId, status }) => {
+      console.log(`Message ${messageId} status: ${status}`);
       setMessages((prev) =>
         prev.map((msg) =>
           msg._id === messageId ? { ...msg, status } : msg
@@ -109,9 +142,8 @@ export default function ChatLayout({ session }) {
     });
 
     socket.on('user:typing', ({ userId }) => {
-      if (selectedConversation) {
-        setIsTyping(true);
-      }
+      console.log(`User ${userId} is typing`);
+      setIsTyping(true);
     });
 
     socket.on('user:stop-typing', () => {
