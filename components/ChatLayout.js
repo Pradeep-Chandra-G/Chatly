@@ -234,21 +234,28 @@ export default function ChatLayout({ session }) {
       const data = await response.json();
       if (response.ok) {
         setMessages(data.messages);
-        // Mark messages as read
-        data.messages.forEach((msg) => {
-          if (msg.senderId !== session.user.id && msg.status !== 'read') {
-            socket?.emit('message:read', {
+        
+        // Mark messages as read and emit socket events immediately
+        const unreadMessages = data.messages.filter(
+          msg => msg.senderId !== session.user.id && msg.status !== 'read'
+        );
+        
+        for (const msg of unreadMessages) {
+          // Emit socket event immediately
+          if (socket && socket.connected) {
+            socket.emit('message:read', {
               messageId: msg._id,
               conversationId
             });
-            // Update in database
-            fetch('/api/messages/status', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ messageId: msg._id, status: 'read' })
-            });
           }
-        });
+          
+          // Update in database
+          fetch('/api/messages/status', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messageId: msg._id, status: 'read' })
+          }).catch(console.error);
+        }
       }
     } catch (error) {
       console.error('Error loading messages:', error);
