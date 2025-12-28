@@ -103,26 +103,24 @@ A fully functional, open-source WhatsApp clone with real-time messaging, group c
 - `/api/conversations` - Manage conversations
 - `/api/messages` - Send and retrieve messages
 - `/api/messages/status` - Update message status
+- `/api/groups` - Create groups
+- `/api/groups/{groupId}/members` - Manage group members
+- `/api/calls` - Initiate and manage calls
+- `/api/upload` - Upload media files
 
-### 🔜 Next Phases (Ready to Build)
+### 🔜 Future Enhancements (Ideas)
 
-**Phase 2: Group Messaging**
-- Create and manage groups
-- Add/remove members
-- Group admin features
-- Group notifications
-
-**Phase 3: WebRTC Calling**
-- Voice calling (1-on-1)
-- Video calling (1-on-1)
-- Call signaling via Socket.io
-- Call notifications and history
-
-**Phase 4: Media Sharing**
-- Image upload and sharing
-- File upload and sharing
-- Audio messages
+- End-to-end encryption (Signal Protocol)
+- Message reactions (emoji)
+- Message replies/quotes
+- Message editing & deletion
+- Voice messages recording
 - Video sharing
+- Push notifications
+- Message search
+- Chat export
+- Multi-device support
+- Status/Stories feature
 
 ## 🛠️ Technology Stack
 
