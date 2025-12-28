@@ -159,7 +159,7 @@ export default function CallModal({
       }
 
       // Create peer connection
-      const peerConnection = createPeerConnection();
+      const peerConnection = await createPeerConnection();
       peerConnectionRef.current = peerConnection;
 
       // Add local stream tracks to peer connection
