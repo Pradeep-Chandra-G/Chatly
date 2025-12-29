@@ -30,6 +30,10 @@ export default function CallModal({
   const localStreamRef = useRef(null);
   const iceCandidatesQueue = useRef([]);
   const hasInitialized = useRef(false);
+  const [connectionQuality, setConnectionQuality] = useState("good");
+  const disconnectTimerRef = useRef(null);
+  const connectionCheckIntervalRef = useRef(null);
+  const lastBytesReceivedRef = useRef(0);
 
   useEffect(() => {
     if (!isOpen || !call) return;
@@ -327,6 +331,40 @@ export default function CallModal({
     }
   };
 
+  const checkConnectionQuality = async (pc) => {
+    try {
+      const stats = await pc.getStats();
+
+      stats.forEach((report) => {
+        if (report.type === "inbound-rtp" && report.mediaType === "video") {
+          const bytesReceived = report.bytesReceived;
+
+          // Check if we're actually receiving data
+          if (
+            lastBytesReceivedRef.current > 0 &&
+            bytesReceived === lastBytesReceivedRef.current
+          ) {
+            console.warn("⚠️ No data received in last 5 seconds");
+            setConnectionQuality("poor");
+
+            // Connection might be stale
+            if (pc.iceConnectionState === "connected") {
+              console.log("🔄 Restarting ICE due to stale connection");
+              pc.restartIce();
+            }
+          } else if (bytesReceived > lastBytesReceivedRef.current) {
+            // Data is flowing, connection is good
+            setConnectionQuality("good");
+          }
+
+          lastBytesReceivedRef.current = bytesReceived;
+        }
+      });
+    } catch (err) {
+      console.error("Error checking connection quality:", err);
+    }
+  };
+
   const createPeerConnection = async () => {
     try {
       console.log("🔑 Fetching TURN credentials...");
@@ -413,45 +451,173 @@ export default function CallModal({
         switch (peerConnection.iceConnectionState) {
           case "connected":
           case "completed":
+            // Clear any existing timers
+            if (disconnectTimer) {
+              clearTimeout(disconnectTimer);
+              disconnectTimer = null;
+            }
+            if (connectionCheckInterval) {
+              clearInterval(connectionCheckInterval);
+            }
+
             setCallStatus("connected");
             toast.success("Call connected");
+
+            // Start monitoring connection quality
+            connectionCheckInterval = setInterval(() => {
+              checkConnectionQuality(peerConnection);
+            }, 5000); // Check every 5 seconds
             break;
+
           case "disconnected":
             console.warn(
-              "⚠️ ICE connection disconnected, waiting for reconnection..."
+              "⚠️ ICE connection disconnected, attempting to reconnect..."
             );
-            break;
-          case "failed":
-            console.error("❌ ICE connection failed");
-            toast.error("Connection failed - trying to reconnect...");
+            toast.info("Connection interrupted, reconnecting...");
 
+            // Give it 10 seconds to reconnect
+            disconnectTimer = setTimeout(() => {
+              console.error("❌ Failed to reconnect after 10 seconds");
+              toast.error("Connection lost");
+              endCall();
+            }, 10000);
+
+            // Try to restart ICE immediately
             if (peerConnection.restartIce) {
-              console.log("🔄 Restarting ICE...");
               peerConnection.restartIce();
-            } else {
-              setTimeout(() => {
-                if (peerConnection.iceConnectionState === "failed") {
-                  toast.error("Connection failed");
-                  endCall();
-                }
-              }, 3000);
             }
             break;
+
+          case "failed":
+            console.error("❌ ICE connection failed");
+
+            // Clear any existing timers
+            if (disconnectTimer) {
+              clearTimeout(disconnectTimer);
+              disconnectTimer = null;
+            }
+
+            // Try to restart ICE
+            if (peerConnection.restartIce) {
+              console.log("🔄 Restarting ICE after failure...");
+              toast.error("Connection failed - trying to reconnect...");
+              peerConnection.restartIce();
+
+              // Give it 15 seconds to recover
+              disconnectTimer = setTimeout(() => {
+                if (peerConnection.iceConnectionState === "failed") {
+                  toast.error("Unable to reconnect");
+                  endCall();
+                }
+              }, 15000);
+            } else {
+              toast.error("Connection failed");
+              endCall();
+            }
+            break;
+
           case "closed":
             console.log("❌ ICE connection closed");
+            if (disconnectTimer) {
+              clearTimeout(disconnectTimer);
+            }
+            if (connectionCheckInterval) {
+              clearInterval(connectionCheckInterval);
+            }
             break;
         }
       };
 
-      peerConnection.onconnectionstatechange = () => {
-        console.log("🔗 Connection state:", peerConnection.connectionState);
-        if (peerConnection.connectionState === "connected") {
-          setCallStatus("connected");
-        } else if (
-          peerConnection.connectionState === "disconnected" ||
-          peerConnection.connectionState === "failed"
-        ) {
-          endCall();
+      peerConnection.oniceconnectionstatechange = () => {
+        console.log(
+          "🔌 ICE connection state:",
+          peerConnection.iceConnectionState
+        );
+
+        switch (peerConnection.iceConnectionState) {
+          case "connected":
+          case "completed":
+            // Clear any existing timers
+            if (disconnectTimerRef.current) {
+              clearTimeout(disconnectTimerRef.current);
+              disconnectTimerRef.current = null;
+            }
+            if (connectionCheckIntervalRef.current) {
+              clearInterval(connectionCheckIntervalRef.current);
+              connectionCheckIntervalRef.current = null;
+            }
+
+            setCallStatus("connected");
+            setConnectionQuality("good"); // Set quality to good
+            toast.success("Call connected");
+
+            // Start monitoring connection quality
+            connectionCheckIntervalRef.current = setInterval(() => {
+              checkConnectionQuality(peerConnection);
+            }, 5000);
+            break;
+
+          case "disconnected":
+            console.warn(
+              "⚠️ ICE connection disconnected, attempting to reconnect..."
+            );
+            setConnectionQuality("reconnecting"); // Update UI
+            toast.info("Connection interrupted, reconnecting...");
+
+            // Give it 10 seconds to reconnect
+            disconnectTimerRef.current = setTimeout(() => {
+              console.error("❌ Failed to reconnect after 10 seconds");
+              toast.error("Connection lost");
+              endCall();
+            }, 10000);
+
+            // Try to restart ICE immediately
+            if (peerConnection.restartIce) {
+              peerConnection.restartIce();
+            }
+            break;
+
+          case "failed":
+            console.error("❌ ICE connection failed");
+
+            // Clear any existing timers
+            if (disconnectTimerRef.current) {
+              clearTimeout(disconnectTimerRef.current);
+              disconnectTimerRef.current = null;
+            }
+
+            setConnectionQuality("poor"); // Update UI
+
+            // Try to restart ICE
+            if (peerConnection.restartIce) {
+              console.log("🔄 Restarting ICE after failure...");
+              toast.error("Connection failed - trying to reconnect...");
+              peerConnection.restartIce();
+
+              // Give it 15 seconds to recover
+              disconnectTimerRef.current = setTimeout(() => {
+                if (peerConnection.iceConnectionState === "failed") {
+                  toast.error("Unable to reconnect");
+                  endCall();
+                }
+              }, 15000);
+            } else {
+              toast.error("Connection failed");
+              endCall();
+            }
+            break;
+
+          case "closed":
+            console.log("❌ ICE connection closed");
+            if (disconnectTimerRef.current) {
+              clearTimeout(disconnectTimerRef.current);
+              disconnectTimerRef.current = null;
+            }
+            if (connectionCheckIntervalRef.current) {
+              clearInterval(connectionCheckIntervalRef.current);
+              connectionCheckIntervalRef.current = null;
+            }
+            break;
         }
       };
 
@@ -538,6 +704,16 @@ export default function CallModal({
   const cleanup = () => {
     console.log("🧹 Cleaning up call resources");
 
+    // Clear any monitoring intervals/timeouts
+    if (disconnectTimerRef.current) {
+      clearTimeout(disconnectTimerRef.current);
+      disconnectTimerRef.current = null;
+    }
+    if (connectionCheckIntervalRef.current) {
+      clearInterval(connectionCheckIntervalRef.current);
+      connectionCheckIntervalRef.current = null;
+    }
+
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => {
         track.stop();
@@ -568,6 +744,9 @@ export default function CallModal({
     }
 
     iceCandidatesQueue.current = [];
+
+    // Reset connection quality
+    setConnectionQuality("good");
   };
 
   const getStatusText = () => {
@@ -602,6 +781,18 @@ export default function CallModal({
           <DialogDescription className="text-sm">
             {getStatusText()}
           </DialogDescription>
+
+          {/* ADD THIS CONNECTION QUALITY INDICATOR */}
+          {callStatus === "connected" && connectionQuality !== "good" && (
+            <div className="flex items-center gap-2">
+              <div className="animate-pulse w-2 h-2 bg-yellow-500 rounded-full" />
+              <span className="text-xs text-yellow-600 dark:text-yellow-400">
+                {connectionQuality === "poor"
+                  ? "Poor Connection"
+                  : "Reconnecting..."}
+              </span>
+            </div>
+          )}
         </DialogHeader>
 
         <div className="space-y-4">
