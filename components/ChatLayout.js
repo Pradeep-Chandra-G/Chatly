@@ -1210,7 +1210,7 @@ export default function ChatLayout({ session }) {
             <div className="text-center max-w-md">
               <MessageCircle className="w-16 h-16 sm:w-20 sm:h-20 mx-auto text-muted-foreground mb-4" />
               <h2 className="text-xl sm:text-2xl font-semibold mb-2">
-                WhatsApp Clone
+                Chatly
               </h2>
               <p className="text-muted-foreground mb-4 text-sm sm:text-base">
                 Select a conversation to start messaging
