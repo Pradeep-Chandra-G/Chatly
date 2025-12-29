@@ -88,11 +88,11 @@ export default function ChatLayout({ session }) {
 
   // Calculate unread count
   useEffect(() => {
-    const count = conversations.filter((conv) => {
-      return conv.lastMessage && conv._id !== selectedConversation?._id;
-    }).length;
+    const count = conversations.reduce((total, conv) => {
+      return total + (conv.unreadCount || 0);
+    }, 0);
     setUnreadCount(count);
-  }, [conversations, selectedConversation]);
+  }, [conversations]);
 
   // Filter conversations based on search
   useEffect(() => {
@@ -212,15 +212,50 @@ export default function ChatLayout({ session }) {
         showNotification("New Message", message.content);
       }
 
+      setConversations((prevConversations) => {
+        return prevConversations.map((conv) => {
+          if (conv._id === message.conversationId) {
+            // Determine last message preview
+            const lastMessagePreview =
+              message.type === "text" ? message.content : `📎 ${message.type}`;
+
+            // Calculate unread count
+            const isCurrentChat = selectedConversation?._id === conv._id;
+            const isOwnMessage = message.senderId === session.user.id;
+            const shouldIncrement = !isCurrentChat && !isOwnMessage;
+
+            return {
+              ...conv,
+              lastMessage: lastMessagePreview,
+              updatedAt: message.createdAt,
+              unreadCount: shouldIncrement
+                ? (conv.unreadCount || 0) + 1
+                : conv.unreadCount || 0,
+            };
+          }
+          return conv;
+        });
+      });
+
+      // Sort conversations by most recent
+      setConversations((prevConversations) => {
+        return [...prevConversations].sort((a, b) => {
+          return new Date(b.updatedAt) - new Date(a.updatedAt);
+        });
+      });
+
+      // If message is for currently selected conversation, add it to messages
       setSelectedConversation((currentConv) => {
         if (currentConv && message.conversationId === currentConv._id) {
           setMessages((prevMessages) => {
+            // Prevent duplicates
             if (prevMessages.some((m) => m._id === message._id)) {
               return prevMessages;
             }
             return [...prevMessages, message];
           });
 
+          // Mark as read if we're viewing the chat
           if (message.senderId !== session.user.id) {
             setTimeout(() => {
               socket.emit("message:read", {
@@ -239,6 +274,7 @@ export default function ChatLayout({ session }) {
             }, 100);
           }
         } else if (message.senderId !== session.user.id) {
+          // Message for different conversation - mark as delivered
           setTimeout(() => {
             socket.emit("message:delivered", {
               messageId: message._id,
@@ -361,6 +397,15 @@ export default function ChatLayout({ session }) {
       loadMessages(selectedConversation._id);
       socket?.emit("conversation:join", selectedConversation._id);
       setShowMobileChat(true);
+
+      // Clear unread count for this conversation
+      setConversations((prevConversations) =>
+        prevConversations.map((conv) =>
+          conv._id === selectedConversation._id
+            ? { ...conv, unreadCount: 0 }
+            : conv
+        )
+      );
     }
 
     return () => {
@@ -379,7 +424,12 @@ export default function ChatLayout({ session }) {
       const response = await fetch("/api/conversations");
       const data = await response.json();
       if (response.ok) {
-        setConversations(data.conversations);
+        // Add unread count to each conversation
+        const conversationsWithUnread = data.conversations.map((conv) => ({
+          ...conv,
+          unreadCount: conv.unreadCount || 0,
+        }));
+        setConversations(conversationsWithUnread);
       }
     } catch (error) {
       console.error("Error loading conversations:", error);
@@ -395,10 +445,12 @@ export default function ChatLayout({ session }) {
       if (response.ok) {
         setMessages(data.messages);
 
+        // Mark all unread messages as read
         const unreadMessages = data.messages.filter(
           (msg) => msg.senderId !== session.user.id && msg.status !== "read"
         );
 
+        // Batch mark as read
         for (const msg of unreadMessages) {
           if (socket && socket.connected) {
             socket.emit("message:read", {
@@ -684,11 +736,12 @@ export default function ChatLayout({ session }) {
             const other = getOtherParticipant(conv);
             const isOnline = other && isUserOnline(other._id);
             const isSelected = selectedConversation?._id === conv._id;
+            const hasUnread = (conv.unreadCount || 0) > 0;
 
             return (
               <div
                 key={conv._id}
-                className={`p-3 sm:p-4 hover:bg-accent cursor-pointer transition-colors ${
+                className={`p-3 sm:p-4 hover:bg-accent cursor-pointer transition-colors relative ${
                   isSelected ? "bg-accent border-l-4 border-primary" : ""
                 }`}
                 onClick={() => setSelectedConversation(conv)}
@@ -711,25 +764,47 @@ export default function ChatLayout({ session }) {
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
                     )}
                   </div>
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold truncate text-sm sm:text-base">
+                        <h3
+                          className={`font-semibold truncate text-sm sm:text-base ${
+                            hasUnread ? "text-foreground" : ""
+                          }`}
+                        >
                           {conv.type === "group" ? conv.name : other?.name}
                         </h3>
                         {conv.type === "group" && (
                           <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {conv.updatedAt &&
-                          new Date(conv.updatedAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                      </span>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-xs text-muted-foreground">
+                          {conv.updatedAt &&
+                            new Date(conv.updatedAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                        </span>
+
+                        {/* UNREAD BADGE */}
+                        {hasUnread && (
+                          <div className="bg-primary text-primary-foreground text-xs font-semibold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
+                            {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">
+
+                    <p
+                      className={`text-sm truncate ${
+                        hasUnread
+                          ? "text-foreground font-medium"
+                          : "text-muted-foreground"
+                      }`}
+                    >
                       {conv.lastMessage || "No messages yet"}
                     </p>
                   </div>
