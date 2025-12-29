@@ -208,6 +208,7 @@ export default function ChatLayout({ session }) {
     socket.on("message:new", (message) => {
       console.log("📨 New message received:", message);
 
+      // Show notification if message is from someone else and not viewing their chat
       if (
         message.senderId !== session.user.id &&
         (!selectedConversation ||
@@ -216,41 +217,9 @@ export default function ChatLayout({ session }) {
         showNotification("New Message", message.content);
       }
 
-      setConversations((prevConversations) => {
-        const updated = prevConversations.map((conv) => {
-          if (conv._id === message.conversationId) {
-            // Determine last message preview
-            const lastMessagePreview =
-              message.type === "text" ? message.content : `📎 ${message.type}`;
-
-            // Calculate unread count
-            const isCurrentChat = selectedConversation?._id === conv._id;
-            const isOwnMessage = message.senderId === session.user.id;
-            const shouldIncrement = !isCurrentChat && !isOwnMessage;
-
-            return {
-              ...conv,
-              lastMessage: lastMessagePreview,
-              updatedAt: message.createdAt,
-              unreadCount: shouldIncrement
-                ? (conv.unreadCount || 0) + 1
-                : conv.unreadCount || 0,
-            };
-          }
-          return conv;
-        });
-
-        // **Sort by most recent message**
-        return updated.sort((a, b) => {
-          const dateA = new Date(a.updatedAt || a.createdAt);
-          const dateB = new Date(b.updatedAt || b.createdAt);
-          return dateB - dateA;
-        });
-      });
-
-      // Rest of the handler remains the same...
       setSelectedConversation((currentConv) => {
         if (currentConv && message.conversationId === currentConv._id) {
+          // Currently viewing this conversation
           setMessages((prevMessages) => {
             if (prevMessages.some((m) => m._id === message._id)) {
               return prevMessages;
@@ -258,6 +227,7 @@ export default function ChatLayout({ session }) {
             return [...prevMessages, message];
           });
 
+          // If message from someone else, mark as read immediately
           if (message.senderId !== session.user.id) {
             setTimeout(() => {
               socket.emit("message:read", {
@@ -276,6 +246,7 @@ export default function ChatLayout({ session }) {
             }, 100);
           }
         } else if (message.senderId !== session.user.id) {
+          // NOT viewing this conversation, mark as delivered since we're online
           setTimeout(() => {
             socket.emit("message:delivered", {
               messageId: message._id,
@@ -296,6 +267,7 @@ export default function ChatLayout({ session }) {
         return currentConv;
       });
 
+      // Reload conversations to update last message and show unread indicator
       loadConversations();
     });
 
@@ -804,6 +776,14 @@ export default function ChatLayout({ session }) {
                     </Avatar>
                     {conv.type === "direct" && isOnline && (
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
+                    )}
+
+                    {conv.hasUnread && !isSelected && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                        <span className="text-xs text-primary-foreground font-bold">
+                          •
+                        </span>
+                      </div>
                     )}
                   </div>
 

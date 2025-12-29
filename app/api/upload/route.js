@@ -1,79 +1,83 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
-// Import auth options
 const authOptions = {
-  session: {
-    strategy: 'jwt'
-  },
+  session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
+      if (user) token.id = user.id;
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-      }
+      if (session.user) session.user.id = token.id;
       return session;
-    }
+    },
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const formData = await request.formData();
-    const file = formData.get('file');
+    const file = formData.get("file");
 
     if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'No file provided' },
+        { error: "File size must be less than 10MB" },
         { status: 400 }
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-    }
-
-    // Generate unique filename
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const fileExtension = file.name.split('.').pop();
-    const uniqueFilename = `${uuidv4()}.${fileExtension}`;
-    const filePath = path.join(uploadsDir, uniqueFilename);
+    const base64File = buffer.toString("base64");
+    const mimeType = file.type || "application/octet-stream";
+    const dataUri = `data:${mimeType};base64,${base64File}`;
 
-    // Write file
-    await writeFile(filePath, buffer);
+    const fileExtension = file.name.split(".").pop().toLowerCase();
+    const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp", "svg"];
+    const resourceType = imageExtensions.includes(fileExtension)
+      ? "image"
+      : "raw";
 
-    // Return file URL
-    const fileUrl = `/uploads/${uniqueFilename}`;
-    
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
+
+    const cloudinaryFormData = new FormData();
+    cloudinaryFormData.append("file", dataUri);
+    cloudinaryFormData.append(
+      "upload_preset",
+      process.env.CLOUDINARY_UPLOAD_PRESET
+    );
+    cloudinaryFormData.append("folder", "chatly");
+
+    const cloudinaryResponse = await fetch(cloudinaryUrl, {
+      method: "POST",
+      body: cloudinaryFormData,
+    });
+
+    if (!cloudinaryResponse.ok) {
+      throw new Error("Cloudinary upload failed");
+    }
+
+    const cloudinaryData = await cloudinaryResponse.json();
+
     return NextResponse.json({
-      url: fileUrl,
+      url: cloudinaryData.secure_url,
       filename: file.name,
       size: file.size,
-      type: file.type
+      type: file.type,
     });
   } catch (error) {
-    console.error('Upload error:', error);
-    return NextResponse.json(
-      { error: 'Upload failed' },
-      { status: 500 }
-    );
+    console.error("Upload error:", error);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

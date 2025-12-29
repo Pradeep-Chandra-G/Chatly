@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { v4 as uuidv4 } from 'uuid';
-import { getDb } from '@/lib/mongodb';
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { v4 as uuidv4 } from "uuid";
+import { getDb } from "@/lib/mongodb";
 
 // Import auth options
 const authOptions = {
   session: {
-    strategy: 'jwt'
+    strategy: "jwt",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -20,21 +20,21 @@ const authOptions = {
         session.user.id = token.id;
       }
       return session;
-    }
+    },
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const db = await getDb();
     const conversations = await db
-      .collection('conversations')
+      .collection("conversations")
       .find({ participants: session.user.id })
       .sort({ updatedAt: -1 })
       .toArray();
@@ -46,23 +46,31 @@ export async function GET(request) {
           (p) => p !== session.user.id
         );
         const participants = await db
-          .collection('users')
+          .collection("users")
           .find({ _id: { $in: otherParticipants } })
           .project({ password: 0 })
           .toArray();
 
+        // Check for unread messages
+        const unreadCount = await db.collection("messages").countDocuments({
+          conversationId: conv._id,
+          senderId: { $ne: session.user.id },
+          status: { $ne: "read" },
+        });
+
         return {
           ...conv,
-          participantDetails: participants
+          participantDetails: participants,
+          hasUnread: unreadCount > 0,
         };
       })
     );
 
     return NextResponse.json({ conversations: conversationsWithDetails });
   } catch (error) {
-    console.error('Get conversations error:', error);
+    console.error("Get conversations error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -72,14 +80,14 @@ export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { participantId, type = 'direct' } = await request.json();
+    const { participantId, type = "direct" } = await request.json();
 
     if (!participantId) {
       return NextResponse.json(
-        { error: 'Participant ID is required' },
+        { error: "Participant ID is required" },
         { status: 400 }
       );
     }
@@ -87,11 +95,13 @@ export async function POST(request) {
     const db = await getDb();
 
     // Check if conversation already exists (for direct messages)
-    if (type === 'direct') {
-      const existingConversation = await db.collection('conversations').findOne({
-        type: 'direct',
-        participants: { $all: [session.user.id, participantId] }
-      });
+    if (type === "direct") {
+      const existingConversation = await db
+        .collection("conversations")
+        .findOne({
+          type: "direct",
+          participants: { $all: [session.user.id, participantId] },
+        });
 
       if (existingConversation) {
         return NextResponse.json({ conversation: existingConversation });
@@ -105,26 +115,26 @@ export async function POST(request) {
       type,
       participants: [session.user.id, participantId],
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
-    await db.collection('conversations').insertOne(newConversation);
+    await db.collection("conversations").insertOne(newConversation);
 
     // Get participant details
     const participant = await db
-      .collection('users')
+      .collection("users")
       .findOne({ _id: participantId }, { projection: { password: 0 } });
 
     return NextResponse.json({
       conversation: {
         ...newConversation,
-        participantDetails: [participant]
-      }
+        participantDetails: [participant],
+      },
     });
   } catch (error) {
-    console.error('Create conversation error:', error);
+    console.error("Create conversation error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
