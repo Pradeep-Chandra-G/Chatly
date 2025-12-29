@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import EditMessageDialog from "@/components/EditMessageDialog";
 import UserSettingsDialog from "@/components/UserSettingsDialog";
+import DeleteMessageDialog from "@/components/DeleteMessageDialog";
 import {
   MessageCircle,
   Send,
@@ -65,6 +66,9 @@ export default function ChatLayout({ session }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [deletingMessage, setDeletingMessage] = useState(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Request notification permission
   useEffect(() => {
@@ -213,7 +217,7 @@ export default function ChatLayout({ session }) {
       }
 
       setConversations((prevConversations) => {
-        return prevConversations.map((conv) => {
+        const updated = prevConversations.map((conv) => {
           if (conv._id === message.conversationId) {
             // Determine last message preview
             const lastMessagePreview =
@@ -235,27 +239,25 @@ export default function ChatLayout({ session }) {
           }
           return conv;
         });
-      });
 
-      // Sort conversations by most recent
-      setConversations((prevConversations) => {
-        return [...prevConversations].sort((a, b) => {
-          return new Date(b.updatedAt) - new Date(a.updatedAt);
+        // **Sort by most recent message**
+        return updated.sort((a, b) => {
+          const dateA = new Date(a.updatedAt || a.createdAt);
+          const dateB = new Date(b.updatedAt || b.createdAt);
+          return dateB - dateA;
         });
       });
 
-      // If message is for currently selected conversation, add it to messages
+      // Rest of the handler remains the same...
       setSelectedConversation((currentConv) => {
         if (currentConv && message.conversationId === currentConv._id) {
           setMessages((prevMessages) => {
-            // Prevent duplicates
             if (prevMessages.some((m) => m._id === message._id)) {
               return prevMessages;
             }
             return [...prevMessages, message];
           });
 
-          // Mark as read if we're viewing the chat
           if (message.senderId !== session.user.id) {
             setTimeout(() => {
               socket.emit("message:read", {
@@ -274,7 +276,6 @@ export default function ChatLayout({ session }) {
             }, 100);
           }
         } else if (message.senderId !== session.user.id) {
-          // Message for different conversation - mark as delivered
           setTimeout(() => {
             socket.emit("message:delivered", {
               messageId: message._id,
@@ -305,14 +306,55 @@ export default function ChatLayout({ session }) {
       );
     });
 
-    socket.on("message:edited", ({ messageId, content, edited, editedAt }) => {
-      console.log("✏️ Message edited received:", messageId, content);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg._id === messageId ? { ...msg, content, edited, editedAt } : msg
-        )
-      );
-    });
+    socket.on(
+      "message:edited",
+      ({ messageId, content, edited, editedAt, conversationId }) => {
+        console.log("✏️ Message edited received:", messageId, content);
+
+        // Update the message in the messages list
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === messageId ? { ...msg, content, edited, editedAt } : msg
+          )
+        );
+
+        // Update the conversation's lastMessage in sidebar
+        setConversations((prevConversations) =>
+          prevConversations.map((conv) =>
+            conv._id === conversationId
+              ? {
+                  ...conv,
+                  lastMessage: content,
+                  updatedAt: new Date().toISOString(),
+                }
+              : conv
+          )
+        );
+      }
+    );
+
+    socket.on(
+      "message:deleted",
+      ({ messageId, conversationId, newLastMessage }) => {
+        console.log("🗑️ Message deleted received:", messageId);
+
+        // Remove message from the messages list
+        setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
+
+        // Update conversation's lastMessage in sidebar
+        setConversations((prevConversations) =>
+          prevConversations.map((conv) =>
+            conv._id === conversationId
+              ? {
+                  ...conv,
+                  lastMessage: newLastMessage,
+                  updatedAt: new Date().toISOString(),
+                }
+              : conv
+          )
+        );
+      }
+    );
 
     socket.on("user:typing", ({ userId }) => {
       console.log(`⌨️ User ${userId} is typing`);
@@ -976,12 +1018,86 @@ export default function ChatLayout({ session }) {
         editedAt: editedMessage.editedAt,
       });
     }
+
+    // **NEW: Update sidebar if this was the last message**
+    setConversations((prevConversations) =>
+      prevConversations.map((conv) => {
+        if (conv._id === selectedConversation._id) {
+          // Check if this message is the last one
+          const lastMsg = messages[messages.length - 1];
+          if (lastMsg && lastMsg._id === editedMessage._id) {
+            return {
+              ...conv,
+              lastMessage: editedMessage.content,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+        }
+        return conv;
+      })
+    );
   };
 
   const handleDeleteMessage = (message) => {
-    // This will be implemented in the next feature
-    console.log("Delete:", message);
-    toast.info("Delete feature coming next!");
+    setDeletingMessage(message);
+    setIsDeleteDialogOpen(true);
+    closeContextMenu();
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!deletingMessage) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch("/api/messages/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messageId: deletingMessage._id,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        // Remove message from local state
+        setMessages((prev) =>
+          prev.filter((msg) => msg._id !== deletingMessage._id)
+        );
+
+        // Update sidebar
+        setConversations((prevConversations) =>
+          prevConversations.map((conv) =>
+            conv._id === selectedConversation._id
+              ? {
+                  ...conv,
+                  lastMessage: data.newLastMessage,
+                  updatedAt: new Date().toISOString(),
+                }
+              : conv
+          )
+        );
+
+        // Emit socket event to notify other users
+        if (socket && socket.connected) {
+          socket.emit("message:delete", {
+            messageId: deletingMessage._id,
+            conversationId: selectedConversation._id,
+            newLastMessage: data.newLastMessage,
+          });
+        }
+
+        toast.success("Message deleted");
+        setIsDeleteDialogOpen(false);
+        setDeletingMessage(null);
+      } else {
+        toast.error(data.error || "Failed to delete message");
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete message");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -1067,7 +1183,7 @@ export default function ChatLayout({ session }) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-9 w-9 hidden sm:flex"
+                      className="h-9 w-9"
                       onClick={() => initiateCall("video")}
                     >
                       <Video className="w-5 h-5" />
@@ -1328,6 +1444,16 @@ export default function ChatLayout({ session }) {
         }}
         message={editingMessage}
         onMessageEdited={handleMessageEdited}
+      />
+
+      <DeleteMessageDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setDeletingMessage(null);
+        }}
+        onConfirm={confirmDeleteMessage}
+        isDeleting={isDeleting}
       />
 
       {activeCall && (
