@@ -141,7 +141,9 @@ export default function ChatLayout({ session }) {
       socket.disconnect();
     }
 
-    socket = io({
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || window.location.origin;
+
+    socket = io(wsUrl, {
       path: "/socket.io/",
       transports: ["websocket", "polling"],
       reconnection: true,
@@ -1209,9 +1211,7 @@ export default function ChatLayout({ session }) {
           <div className="flex-1 flex items-center justify-center bg-muted/20 p-4">
             <div className="text-center max-w-md">
               <MessageCircle className="w-16 h-16 sm:w-20 sm:h-20 mx-auto text-muted-foreground mb-4" />
-              <h2 className="text-xl sm:text-2xl font-semibold mb-2">
-                Chatly
-              </h2>
+              <h2 className="text-xl sm:text-2xl font-semibold mb-2">Chatly</h2>
               <p className="text-muted-foreground mb-4 text-sm sm:text-base">
                 Select a conversation to start messaging
               </p>

@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_OPTIONS='--max-old-space-size=512' node server.js",
+    "dev": "node server.js",
     "dev:no-reload": "node server.js",
     "dev:webpack": "node server.js",
+    "dev:websocket": "node websocket-server.js",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js"
+    "start": "NODE_ENV=production node server.js",
+    "start:websocket": "node websocket-server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
