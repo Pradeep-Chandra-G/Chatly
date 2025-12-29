@@ -43,8 +43,8 @@ let pingInterval;
 
 export default function ChatLayout({ session }) {
   const [conversations, setConversations] = useState([]);
-  const [filteredConversations, setFilteredConversations] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [userLastSeen, setUserLastSeen] = useState(new Map());
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
@@ -98,26 +98,6 @@ export default function ChatLayout({ session }) {
     setUnreadCount(count);
   }, [conversations]);
 
-  // Filter conversations based on search
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredConversations(conversations);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = conversations.filter((conv) => {
-        const other = getOtherParticipant(conv);
-        const name = conv.type === "group" ? conv.name : other?.name;
-        const email = other?.email || "";
-        return (
-          name?.toLowerCase().includes(query) ||
-          email.toLowerCase().includes(query) ||
-          conv.lastMessage?.toLowerCase().includes(query)
-        );
-      });
-      setFilteredConversations(filtered);
-    }
-  }, [searchQuery, conversations]);
-
   // Initialize Socket.io with heartbeat
   useEffect(() => {
     if (socket && socket.connected) {
@@ -134,6 +114,51 @@ export default function ChatLayout({ session }) {
       }
     };
   }, []);
+
+  const getFilteredConversations = () => {
+    if (!searchQuery.trim()) {
+      return conversations;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return conversations.filter((conv) => {
+      const other = getOtherParticipant(conv);
+      const name = conv.type === "group" ? conv.name : other?.name;
+      const email = other?.email || "";
+      return (
+        name?.toLowerCase().includes(query) ||
+        email.toLowerCase().includes(query) ||
+        conv.lastMessage?.toLowerCase().includes(query)
+      );
+    });
+  };
+
+  const formatLastSeen = (userId) => {
+    if (isUserOnline(userId)) {
+      return "online";
+    }
+
+    const lastSeen = userLastSeen.get(userId);
+    if (!lastSeen) return "offline";
+
+    const now = new Date();
+    const lastSeenDate = new Date(lastSeen);
+    const diffMs = now - lastSeenDate;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return "just now";
+    if (diffMins < 60)
+      return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24)
+      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+
+    return lastSeenDate.toLocaleDateString();
+  };
 
   const socketInitializer = async () => {
     if (socket && socket.connected) {
@@ -178,6 +203,15 @@ export default function ChatLayout({ session }) {
       if (pingInterval) {
         clearInterval(pingInterval);
       }
+    });
+
+    socket.on("user:last-seen", ({ userId, lastSeen }) => {
+      console.log(`👁️ User ${userId} last seen:`, lastSeen);
+      setUserLastSeen((prev) => {
+        const updated = new Map(prev);
+        updated.set(userId, lastSeen);
+        return updated;
+      });
     });
 
     socket.on("connect_error", (error) => {
@@ -530,7 +564,11 @@ export default function ChatLayout({ session }) {
         });
 
         if (socket && socket.connected) {
-          socket.emit("message:send", data.message);
+          // **ADD PARTICIPANTS TO THE EMITTED DATA**
+          socket.emit("message:send", {
+            ...data.message,
+            participants: selectedConversation.participants, // ADD THIS LINE
+          });
         }
 
         loadConversations();
@@ -758,7 +796,7 @@ export default function ChatLayout({ session }) {
       </div>
 
       <ScrollArea className="flex-1">
-        {filteredConversations.length === 0 ? (
+        {getFilteredConversations().length === 0 ? (
           <div className="p-8 text-center">
             <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-sm">
@@ -775,7 +813,7 @@ export default function ChatLayout({ session }) {
             )}
           </div>
         ) : (
-          filteredConversations.map((conv) => {
+          getFilteredConversations().map((conv) => {
             const other = getOtherParticipant(conv);
             const isOnline = other && isUserOnline(other._id);
             const isSelected = selectedConversation?._id === conv._id;
@@ -1169,11 +1207,9 @@ export default function ChatLayout({ session }) {
                         } members`
                       : isTyping
                       ? "typing..."
-                      : isUserOnline(
+                      : formatLastSeen(
                           getOtherParticipant(selectedConversation)?._id
-                        )
-                      ? "online"
-                      : "offline"}
+                        )}
                   </p>
                 </div>
               </div>
