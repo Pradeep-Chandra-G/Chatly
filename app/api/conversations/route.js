@@ -1,9 +1,9 @@
+// app/api/conversations/route.js - FIXED VERSION
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { v4 as uuidv4 } from "uuid";
 import { getDb } from "@/lib/mongodb";
 
-// Import auth options
 const authOptions = {
   session: {
     strategy: "jwt",
@@ -39,7 +39,7 @@ export async function GET(request) {
       .sort({ updatedAt: -1 })
       .toArray();
 
-    // Populate participant details
+    // Populate participant details and count unread messages
     const conversationsWithDetails = await Promise.all(
       conversations.map(async (conv) => {
         const otherParticipants = conv.participants.filter(
@@ -51,17 +51,28 @@ export async function GET(request) {
           .project({ password: 0 })
           .toArray();
 
-        // Check for unread messages
-        const unreadCount = await db.collection("messages").countDocuments({
-          conversationId: conv._id,
-          senderId: { $ne: session.user.id },
-          status: { $ne: "read" },
-        });
+        // CRITICAL FIX: Count unread messages properly
+        // Messages sent by others AND not read by current user
+        const unreadMessages = await db
+          .collection("messages")
+          .find({
+            conversationId: conv._id,
+            senderId: { $ne: session.user.id }, // NOT sent by me
+            status: { $in: ["sent", "delivered"] }, // NOT read yet
+          })
+          .toArray();
+
+        const unreadCount = unreadMessages.length;
+
+        console.log(
+          `📊 Conversation ${conv._id}: ${unreadCount} unread messages`
+        );
 
         return {
           ...conv,
           participantDetails: participants,
           hasUnread: unreadCount > 0,
+          unreadCount: unreadCount,
         };
       })
     );
@@ -129,6 +140,8 @@ export async function POST(request) {
       conversation: {
         ...newConversation,
         participantDetails: [participant],
+        unreadCount: 0,
+        hasUnread: false,
       },
     });
   } catch (error) {

@@ -219,7 +219,9 @@ export default function ChatLayout({ session }) {
 
       setSelectedConversation((currentConv) => {
         if (currentConv && message.conversationId === currentConv._id) {
-          // Currently viewing this conversation
+          // ✅ CASE 1: Currently viewing this conversation
+          console.log("👀 User is viewing this conversation");
+
           setMessages((prevMessages) => {
             if (prevMessages.some((m) => m._id === message._id)) {
               return prevMessages;
@@ -227,8 +229,9 @@ export default function ChatLayout({ session }) {
             return [...prevMessages, message];
           });
 
-          // If message from someone else, mark as read immediately
+          // If message from someone else, mark as read IMMEDIATELY
           if (message.senderId !== session.user.id) {
+            console.log("📖 Marking message as read immediately");
             setTimeout(() => {
               socket.emit("message:read", {
                 messageId: message._id,
@@ -246,7 +249,10 @@ export default function ChatLayout({ session }) {
             }, 100);
           }
         } else if (message.senderId !== session.user.id) {
-          // NOT viewing this conversation, mark as delivered since we're online
+          // ✅ CASE 2: NOT viewing this conversation, but user is online
+          console.log("📱 User is online but NOT viewing this conversation");
+
+          // Mark as delivered since user is online (just not viewing this chat)
           setTimeout(() => {
             socket.emit("message:delivered", {
               messageId: message._id,
@@ -267,7 +273,7 @@ export default function ChatLayout({ session }) {
         return currentConv;
       });
 
-      // Reload conversations to update last message and show unread indicator
+      // Reload conversations to update unread count and last message
       loadConversations();
     });
 
@@ -412,11 +418,11 @@ export default function ChatLayout({ session }) {
       socket?.emit("conversation:join", selectedConversation._id);
       setShowMobileChat(true);
 
-      // Clear unread count for this conversation
+      // IMPORTANT: Clear unread count immediately when opening conversation
       setConversations((prevConversations) =>
         prevConversations.map((conv) =>
           conv._id === selectedConversation._id
-            ? { ...conv, unreadCount: 0 }
+            ? { ...conv, unreadCount: 0, hasUnread: false }
             : conv
         )
       );
@@ -459,25 +465,31 @@ export default function ChatLayout({ session }) {
       if (response.ok) {
         setMessages(data.messages);
 
-        // Mark all unread messages as read
+        // Find all unread messages (messages from others that aren't read)
         const unreadMessages = data.messages.filter(
           (msg) => msg.senderId !== session.user.id && msg.status !== "read"
         );
 
+        console.log(`📖 Marking ${unreadMessages.length} messages as read`);
+
         // Batch mark as read
-        for (const msg of unreadMessages) {
+        if (unreadMessages.length > 0) {
+          // Emit bulk read event
           if (socket && socket.connected) {
-            socket.emit("message:read", {
-              messageId: msg._id,
+            socket.emit("messages:mark-read", {
+              messageIds: unreadMessages.map((m) => m._id),
               conversationId,
             });
           }
 
-          fetch("/api/messages/status", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messageId: msg._id, status: "read" }),
-          }).catch(console.error);
+          // Update in database
+          for (const msg of unreadMessages) {
+            fetch("/api/messages/status", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ messageId: msg._id, status: "read" }),
+            }).catch(console.error);
+          }
         }
       }
     } catch (error) {
@@ -574,6 +586,8 @@ export default function ChatLayout({ session }) {
   const handleMediaUploaded = async (media) => {
     if (!selectedConversation) return;
 
+    console.log("📤 Sending media message:", media);
+
     try {
       const response = await fetch("/api/messages", {
         method: "POST",
@@ -582,19 +596,34 @@ export default function ChatLayout({ session }) {
           conversationId: selectedConversation._id,
           content: media.fileName || "Media file",
           type: media.type,
-          mediaUrl: media.url,
+          mediaUrl: media.url, // This should be the full Cloudinary URL
           fileName: media.fileName,
           fileSize: media.fileSize,
         }),
       });
 
       const data = await response.json();
+
       if (response.ok) {
-        socket.emit("message:send", data.message);
+        console.log("✅ Media message created:", data.message);
+        console.log("🔗 Media URL:", data.message.mediaUrl);
+
+        // Emit to socket
+        if (socket && socket.connected) {
+          socket.emit("message:send", data.message);
+        }
+
+        // Add to local messages
         setMessages((prev) => [...prev, data.message]);
+
+        // Refresh conversations
         loadConversations();
+      } else {
+        console.error("❌ Failed to create media message:", data);
+        toast.error(data.error || "Failed to send media");
       }
     } catch (error) {
+      console.error("❌ Media upload error:", error);
       toast.error("Failed to send media");
     }
   };
@@ -750,7 +779,14 @@ export default function ChatLayout({ session }) {
             const other = getOtherParticipant(conv);
             const isOnline = other && isUserOnline(other._id);
             const isSelected = selectedConversation?._id === conv._id;
-            const hasUnread = (conv.unreadCount || 0) > 0;
+            const hasUnread = conv.hasUnread && !isSelected; // Don't show unread if selected
+            const unreadCount = isSelected ? 0 : conv.unreadCount || 0;
+
+            console.log(`📊 Rendering conversation ${conv._id}:`, {
+              hasUnread,
+              unreadCount,
+              isSelected,
+            });
 
             return (
               <div
@@ -776,14 +812,6 @@ export default function ChatLayout({ session }) {
                     </Avatar>
                     {conv.type === "direct" && isOnline && (
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
-                    )}
-
-                    {conv.hasUnread && !isSelected && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                        <span className="text-xs text-primary-foreground font-bold">
-                          •
-                        </span>
-                      </div>
                     )}
                   </div>
 
@@ -811,10 +839,10 @@ export default function ChatLayout({ session }) {
                             })}
                         </span>
 
-                        {/* UNREAD BADGE */}
-                        {hasUnread && (
+                        {/* UNREAD BADGE - Only show if not selected */}
+                        {hasUnread && unreadCount > 0 && (
                           <div className="bg-primary text-primary-foreground text-xs font-semibold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
-                            {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
+                            {unreadCount > 99 ? "99+" : unreadCount}
                           </div>
                         )}
                       </div>
@@ -1181,6 +1209,15 @@ export default function ChatLayout({ session }) {
                 const isOwn = message.senderId === session.user.id;
                 const groupedReactions = groupReactions(message.reactions);
 
+                // Debug log
+                if (message.type === "image") {
+                  console.log("🖼️ Rendering image message:", {
+                    messageId: message._id,
+                    mediaUrl: message.mediaUrl,
+                    type: message.type,
+                  });
+                }
+
                 return (
                   <div
                     key={message._id}
@@ -1201,12 +1238,11 @@ export default function ChatLayout({ session }) {
                         onTouchEnd={handleLongPressEnd}
                         onTouchMove={handleLongPressEnd}
                       >
-                        {/* Show quoted/replied message if exists */}
+                        {/* Reply preview */}
                         {message.replyToMessage && (
                           <div
                             className="bg-black/10 dark:bg-white/10 border-l-2 border-primary/50 rounded px-2 py-1 mb-2 cursor-pointer hover:bg-black/20 dark:hover:bg-white/20 transition-colors"
                             onClick={() => {
-                              // Scroll to the original message
                               const originalMsg = document.getElementById(
                                 `msg-${message.replyToMessage._id}`
                               );
@@ -1250,6 +1286,7 @@ export default function ChatLayout({ session }) {
                           </div>
                         )}
 
+                        {/* IMAGE MESSAGE - CRITICAL FIX */}
                         {message.type === "image" && message.mediaUrl && (
                           <div className="mb-2">
                             <img
@@ -1259,9 +1296,23 @@ export default function ChatLayout({ session }) {
                               onClick={() =>
                                 window.open(message.mediaUrl, "_blank")
                               }
+                              onError={(e) => {
+                                console.error(
+                                  "❌ Image failed to load:",
+                                  message.mediaUrl
+                                );
+                                e.target.style.display = "none";
+                                // Show error message
+                                const errorDiv = document.createElement("div");
+                                errorDiv.className = "text-xs text-red-500 p-2";
+                                errorDiv.textContent = "Failed to load image";
+                                e.target.parentNode.appendChild(errorDiv);
+                              }}
                             />
                           </div>
                         )}
+
+                        {/* FILE MESSAGE */}
                         {message.type === "file" && message.mediaUrl && (
                           <a
                             href={message.mediaUrl}
@@ -1284,6 +1335,7 @@ export default function ChatLayout({ session }) {
                           </a>
                         )}
 
+                        {/* TEXT CONTENT */}
                         {message.content && (
                           <div>
                             <p className="break-words text-sm sm:text-base">
@@ -1297,6 +1349,7 @@ export default function ChatLayout({ session }) {
                           </div>
                         )}
 
+                        {/* TIMESTAMP & STATUS */}
                         <div className="flex items-center gap-1 justify-end mt-1">
                           <span className="text-xs opacity-70">
                             {new Date(message.createdAt).toLocaleTimeString(
@@ -1311,7 +1364,7 @@ export default function ChatLayout({ session }) {
                         </div>
                       </div>
 
-                      {/* Render reactions below message */}
+                      {/* REACTIONS */}
                       {groupedReactions.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1 px-2">
                           {groupedReactions.map((reaction, idx) => {
