@@ -34,6 +34,8 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get("conversationId");
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const before = searchParams.get("before"); // Timestamp for pagination
 
     if (!conversationId) {
       return NextResponse.json(
@@ -57,13 +59,28 @@ export async function GET(request) {
       );
     }
 
+    // Build query
+    const query = { conversationId };
+
+    // If 'before' is provided, fetch messages older than that timestamp
+    if (before) {
+      query.createdAt = { $lt: new Date(before) };
+    }
+
     const messages = await db
       .collection("messages")
-      .find({ conversationId })
-      .sort({ createdAt: 1 })
+      .find(query)
+      .sort({ createdAt: -1 }) // Sort NEWEST first to get the slice we want
+      .limit(limit)
       .toArray();
 
-    return NextResponse.json({ messages });
+    // Reverse them back to CHRONOLOGICAL order (Oldest -> Newest) for the UI
+    const sortedMessages = messages.reverse();
+
+    return NextResponse.json({
+      messages: sortedMessages,
+      hasMore: messages.length === limit, // If we got a full page, there might be more
+    });
   } catch (error) {
     console.error("Get messages error:", error);
     return NextResponse.json(

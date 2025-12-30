@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo, memo, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  memo,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import { signOut } from "next-auth/react";
 import { io } from "socket.io-client";
 import { Button } from "@/components/ui/button";
@@ -22,6 +30,7 @@ import {
   Phone,
   Video,
   MoreVertical,
+  ArrowDown,
   Check,
   CheckCheck,
   FileText,
@@ -35,6 +44,7 @@ import {
   SortAsc,
   SortDesc,
   Clock,
+  Loader2, // Added Loader2 for the loading spinner
 } from "lucide-react";
 import { toast } from "sonner";
 import NewChatDialog from "@/components/NewChatDialog";
@@ -422,6 +432,16 @@ export default function ChatLayout({ session }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [sortBy, setSortBy] = useState("lastMessage");
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
+
+  // New states for pagination and scroll
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Refs for scroll management
+  const scrollViewportRef = useRef(null);
+  const prevScrollHeightRef = useRef(0);
+  const shouldMaintainScrollRef = useRef(false);
 
   // Search Handlers (Moved BACK INSIDE the component where they belong)
   const handleSearchChange = useCallback((e) => {
@@ -432,7 +452,40 @@ export default function ChatLayout({ session }) {
     setSearchQuery("");
   }, []);
 
-  // ... (Rest of your Effects, Socket init, and helper functions stay the same)
+  // --- SCROLL MANAGEMENT WITH useLayoutEffect ---
+  // This hook runs synchronously after DOM updates but before the browser paints.
+  // It effectively restores the scroll position when new messages are added at the top.
+  useLayoutEffect(() => {
+    if (shouldMaintainScrollRef.current && scrollViewportRef.current) {
+      const container = scrollViewportRef.current;
+      const newScrollHeight = container.scrollHeight;
+      const heightDifference = newScrollHeight - prevScrollHeightRef.current;
+
+      // Adjust scrollTop by the amount of new content added to the top
+      if (heightDifference > 0) {
+        container.scrollTop = heightDifference + container.scrollTop;
+      }
+
+      shouldMaintainScrollRef.current = false;
+    }
+  }, [messages]);
+
+  const handleScroll = useCallback(
+    (e) => {
+      const container = e.target;
+      const { scrollTop, scrollHeight, clientHeight } = container;
+
+      // Logic 1: Load more messages (Existing)
+      if (scrollTop < 50 && hasMore && !isLoadingMore && messages.length > 0) {
+        loadMessages(selectedConversation._id, true);
+      }
+
+      // Logic 2: Show "Back to Bottom" button if user is 300px away from bottom
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      setShowScrollBottom(distanceFromBottom > 300);
+    },
+    [hasMore, isLoadingMore, messages.length, selectedConversation]
+  );
 
   // Request notification permission
   useEffect(() => {
@@ -605,6 +658,16 @@ export default function ChatLayout({ session }) {
             }
             return [...prevMessages, message];
           });
+
+          // Auto scroll to bottom on new message if near bottom
+          // Or just let user scroll. Usually we scroll to bottom on new message.
+          if (messagesEndRef.current) {
+            setTimeout(
+              () =>
+                messagesEndRef.current.scrollIntoView({ behavior: "smooth" }),
+              100
+            );
+          }
 
           if (message.senderId !== session.user.id) {
             setTimeout(() => {
@@ -793,7 +856,9 @@ export default function ChatLayout({ session }) {
 
   useEffect(() => {
     if (selectedConversation) {
-      loadMessages(selectedConversation._id);
+      setHasMore(true); // Reset hasMore
+      setMessages([]); // Clear previous messages immediately
+      loadMessages(selectedConversation._id, false); // Load new ones
       socket?.emit("conversation:join", selectedConversation._id);
       setShowMobileChat(true);
 
@@ -813,10 +878,6 @@ export default function ChatLayout({ session }) {
     };
   }, [selectedConversation?._id]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
   const loadConversations = async () => {
     try {
       const response = await fetch("/api/conversations");
@@ -833,17 +894,50 @@ export default function ChatLayout({ session }) {
     }
   };
 
-  const loadMessages = async (conversationId) => {
+  const loadMessages = async (conversationId, isLoadMore = false) => {
     try {
-      const response = await fetch(
-        `/api/messages?conversationId=${conversationId}`
-      );
-      const data = await response.json();
-      if (response.ok) {
-        setMessages(data.messages);
+      if (isLoadMore) {
+        setIsLoadingMore(true);
+        // Capture snapshot of current scroll height before adding new items
+        if (scrollViewportRef.current) {
+          prevScrollHeightRef.current = scrollViewportRef.current.scrollHeight;
+          shouldMaintainScrollRef.current = true;
+        }
+      }
 
+      // If loading more, get the createdAt of the OLDEST message we currently have
+      const beforeTimestamp =
+        isLoadMore && messages.length > 0 ? messages[0].createdAt : null;
+
+      const url = new URL("/api/messages", window.location.origin);
+      url.searchParams.append("conversationId", conversationId);
+      url.searchParams.append("limit", "50");
+      if (beforeTimestamp) {
+        url.searchParams.append("before", beforeTimestamp);
+      }
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (response.ok) {
+        if (isLoadMore) {
+          // React state update triggers re-render.
+          // useLayoutEffect will catch this and restore scroll position.
+          setMessages((prev) => [...data.messages, ...prev]);
+          setHasMore(data.hasMore);
+        } else {
+          // Initial load
+          setMessages(data.messages);
+          setHasMore(data.hasMore);
+          // Scroll to bottom for initial load
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+          }, 100);
+        }
+
+        // Mark unread as read logic (simplified)
         const unreadMessages = data.messages.filter(
-          (msg) => msg.senderId !== session.user.id && msg.status !== "read"
+          (m) => m.senderId !== session.user.id && m.status !== "read"
         );
 
         if (unreadMessages.length > 0) {
@@ -854,17 +948,22 @@ export default function ChatLayout({ session }) {
             });
           }
 
-          for (const msg of unreadMessages) {
-            fetch("/api/messages/status", {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ messageId: msg._id, status: "read" }),
-            }).catch(console.error);
-          }
+          // In background
+          Promise.all(
+            unreadMessages.map((msg) =>
+              fetch("/api/messages/status", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messageId: msg._id, status: "read" }),
+              })
+            )
+          ).catch(console.error);
         }
       }
     } catch (error) {
       console.error("Error loading messages:", error);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -898,6 +997,12 @@ export default function ChatLayout({ session }) {
           }
           return [...prev, data.message];
         });
+
+        // Scroll to bottom after sending
+        setTimeout(
+          () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
+          100
+        );
 
         if (socket && socket.connected) {
           socket.emit("message:send", {
@@ -975,6 +1080,10 @@ export default function ChatLayout({ session }) {
 
       if (response.ok) {
         setMessages((prev) => [...prev, data.message]);
+        setTimeout(
+          () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
+          100
+        );
 
         if (socket && socket.connected) {
           socket.emit("message:send", {
@@ -1399,7 +1508,20 @@ export default function ChatLayout({ session }) {
               </div>
             </div>
 
-            <ScrollArea className="flex-1 p-3 sm:p-4 bg-muted/20">
+            {/* MAIN CHAT AREA - REPLACED SCROLLAREA WITH NATIVE DIV */}
+            <div
+              ref={scrollViewportRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto p-3 sm:p-4 bg-muted/20"
+              style={{ display: "flex", flexDirection: "column" }}
+            >
+              {/* Loading Indicator for pagination */}
+              <div className="flex justify-center h-6 min-h-[24px]">
+                {isLoadingMore && (
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                )}
+              </div>
+
               {messages.map((message) => {
                 const isOwn = message.senderId === session.user.id;
                 const groupedReactions = groupReactions(message.reactions);
@@ -1585,7 +1707,23 @@ export default function ChatLayout({ session }) {
                 );
               })}
               <div ref={messagesEndRef} />
-            </ScrollArea>
+
+              {showScrollBottom && (
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="absolute bottom-20 right-4 rounded-full shadow-lg z-10 animate-in fade-in zoom-in duration-200"
+                  onClick={() =>
+                    messagesEndRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                    })
+                  }
+                >
+                  <ArrowDown className="w-5 h-5" />
+                  {/* Optional: Add unread count badge here if new messages arrive while scrolled up */}
+                </Button>
+              )}
+            </div>
 
             <form
               onSubmit={handleSendMessage}
