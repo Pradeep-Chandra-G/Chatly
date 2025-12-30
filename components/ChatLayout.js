@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { signOut } from "next-auth/react";
 import { io } from "socket.io-client";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,10 @@ import {
   Reply,
   Settings,
   Image as ImageIcon,
+  Filter,
+  SortAsc,
+  SortDesc,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import NewChatDialog from "@/components/NewChatDialog";
@@ -69,6 +73,8 @@ export default function ChatLayout({ session }) {
   const [deletingMessage, setDeletingMessage] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [sortBy, setSortBy] = useState("lastMessage"); // "lastMessage" | "nameAsc" | "nameDesc"
 
   // Request notification permission
   useEffect(() => {
@@ -115,23 +121,82 @@ export default function ChatLayout({ session }) {
     };
   }, []);
 
-  const getFilteredConversations = () => {
-    if (!searchQuery.trim()) {
-      return conversations;
+  const filteredAndSortedConversations = useMemo(() => {
+    let filtered = [...conversations];
+
+    // Apply unread filter
+    if (showUnreadOnly) {
+      filtered = filtered.filter(
+        (conv) => conv.hasUnread && conv.unreadCount > 0
+      );
     }
 
-    const query = searchQuery.toLowerCase();
-    return conversations.filter((conv) => {
-      const other = getOtherParticipant(conv);
-      const name = conv.type === "group" ? conv.name : other?.name;
-      const email = other?.email || "";
-      return (
-        name?.toLowerCase().includes(query) ||
-        email.toLowerCase().includes(query) ||
-        conv.lastMessage?.toLowerCase().includes(query)
-      );
-    });
-  };
+    // Apply search filter with scoring
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+
+      filtered = filtered
+        .map((conv) => {
+          const other = getOtherParticipant(conv);
+          const name = (conv.type === "group" ? conv.name : other?.name) || "";
+          const email = other?.email || "";
+          const lastMessage = conv.lastMessage || "";
+
+          let score = 0;
+          const nameLower = name.toLowerCase();
+          const emailLower = email.toLowerCase();
+          const messageLower = lastMessage.toLowerCase();
+
+          // Higher priority for name matches
+          if (nameLower.includes(query)) score += 10;
+          if (nameLower.startsWith(query)) score += 5;
+
+          // Medium priority for email matches
+          if (emailLower.includes(query)) score += 3;
+
+          // Lower priority for message matches
+          if (messageLower.includes(query)) score += 1;
+
+          return { ...conv, searchScore: score };
+        })
+        .filter((conv) => conv.searchScore > 0)
+        .sort((a, b) => b.searchScore - a.searchScore);
+    }
+
+    // Apply sorting (only if not searching)
+    if (!searchQuery.trim()) {
+      switch (sortBy) {
+        case "nameAsc":
+          filtered.sort((a, b) => {
+            const nameA = (
+              a.type === "group" ? a.name : getOtherParticipant(a)?.name || ""
+            ).toLowerCase();
+            const nameB = (
+              b.type === "group" ? b.name : getOtherParticipant(b)?.name || ""
+            ).toLowerCase();
+            return nameA.localeCompare(nameB);
+          });
+          break;
+        case "nameDesc":
+          filtered.sort((a, b) => {
+            const nameA = (
+              a.type === "group" ? a.name : getOtherParticipant(a)?.name || ""
+            ).toLowerCase();
+            const nameB = (
+              b.type === "group" ? b.name : getOtherParticipant(b)?.name || ""
+            ).toLowerCase();
+            return nameB.localeCompare(nameA);
+          });
+          break;
+        case "lastMessage":
+        default:
+          // Already sorted by updatedAt from backend
+          break;
+      }
+    }
+
+    return filtered;
+  }, [conversations, searchQuery, showUnreadOnly, sortBy]);
 
   const formatLastSeen = (userId) => {
     if (isUserOnline(userId)) {
@@ -824,8 +889,61 @@ export default function ChatLayout({ session }) {
         </div>
       </div>
 
+      {/* Filter and Sort Bar */}
+      <div className="flex items-center gap-1 px-4 py-2 border-b border-border">
+        <Button
+          variant={showUnreadOnly ? "default" : "ghost"}
+          size="sm"
+          className="h-8 text-xs"
+          onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+        >
+          <Filter className="w-3 h-3 mr-1" />
+          Unread
+          {showUnreadOnly &&
+            conversations.filter((c) => c.hasUnread).length > 0 && (
+              <span className="ml-1 bg-primary-foreground text-primary rounded-full px-1.5 text-xs font-semibold">
+                {conversations.filter((c) => c.hasUnread).length}
+              </span>
+            )}
+        </Button>
+
+        <div className="flex items-center gap-1 ml-auto">
+          <Button
+            variant={sortBy === "nameAsc" ? "default" : "ghost"}
+            size="sm"
+            className="h-8 px-2"
+            onClick={() =>
+              setSortBy(sortBy === "nameAsc" ? "lastMessage" : "nameAsc")
+            }
+            title="Sort A-Z"
+          >
+            <SortAsc className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={sortBy === "nameDesc" ? "default" : "ghost"}
+            size="sm"
+            className="h-8 px-2"
+            onClick={() =>
+              setSortBy(sortBy === "nameDesc" ? "lastMessage" : "nameDesc")
+            }
+            title="Sort Z-A"
+          >
+            <SortDesc className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={sortBy === "lastMessage" ? "default" : "ghost"}
+            size="sm"
+            className="h-8 px-2"
+            onClick={() => setSortBy("lastMessage")}
+            title="Sort by recent"
+          >
+            <Clock className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
       <ScrollArea className="flex-1">
-        {getFilteredConversations().length === 0 ? (
+        {filteredAndSortedConversations.length === 0 ? (
           <div className="p-8 text-center">
             <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-sm">
@@ -842,7 +960,7 @@ export default function ChatLayout({ session }) {
             )}
           </div>
         ) : (
-          getFilteredConversations().map((conv) => {
+          filteredAndSortedConversations.map((conv) => {
             const other = getOtherParticipant(conv);
             const isOnline = other && isUserOnline(other._id);
             const isSelected = selectedConversation?._id === conv._id;
