@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, memo, useCallback } from "react";
 import { signOut } from "next-auth/react";
 import { io } from "socket.io-client";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,353 @@ import MediaUpload from "@/components/MediaUpload";
 let socket;
 let pingInterval;
 
+// --- Helper Functions (Moved outside to be accessible by both components) ---
+
+const getOtherParticipant = (conversation) => {
+  return conversation.participantDetails?.[0];
+};
+
+const SearchInput = ({ value, onChange, onClear }) => {
+  return (
+    <div className="relative">
+      <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+      <Input
+        placeholder="Search conversations..."
+        className="pl-9"
+        value={value}
+        onChange={onChange}
+        autoComplete="off"
+      />
+      {value && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-1 top-1 h-8 w-8"
+          onClick={onClear}
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
+  );
+};
+
+// --- Sidebar Component (Defined OUTSIDE to prevent re-renders/focus loss) ---
+
+const SidebarContent = memo(
+  ({
+    sessionUser,
+    conversations,
+    searchQuery,
+    onSearchChange,
+    onSearchClear,
+    showUnreadOnly,
+    onToggleUnreadOnly,
+    sortBy,
+    onSetSortBy,
+    selectedConversation,
+    onSelectConversation,
+    isUserOnline,
+    onOpenSettings,
+    onOpenNewChat,
+    onOpenCreateGroup,
+    onSignOut,
+  }) => {
+    // Logic for filtering conversations moved INSIDE the component
+    const filteredAndSortedConversations = useMemo(() => {
+      let filtered = [...conversations];
+
+      // Apply unread filter
+      if (showUnreadOnly) {
+        filtered = filtered.filter(
+          (conv) => conv.hasUnread && conv.unreadCount > 0
+        );
+      }
+
+      // Apply search filter with scoring
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+
+        filtered = filtered
+          .map((conv) => {
+            const other = getOtherParticipant(conv);
+            const name =
+              (conv.type === "group" ? conv.name : other?.name) || "";
+            const email = other?.email || "";
+            const lastMessage = conv.lastMessage || "";
+
+            let score = 0;
+            const nameLower = name.toLowerCase();
+            const emailLower = email.toLowerCase();
+            const messageLower = lastMessage.toLowerCase();
+
+            // Higher priority for name matches
+            if (nameLower.includes(query)) score += 10;
+            if (nameLower.startsWith(query)) score += 5;
+
+            // Medium priority for email matches
+            if (emailLower.includes(query)) score += 3;
+
+            // Lower priority for message matches
+            if (messageLower.includes(query)) score += 1;
+
+            return { ...conv, searchScore: score };
+          })
+          .filter((conv) => conv.searchScore > 0)
+          .sort((a, b) => b.searchScore - a.searchScore);
+      }
+
+      // Apply sorting (only if not searching)
+      if (!searchQuery.trim()) {
+        switch (sortBy) {
+          case "nameAsc":
+            filtered.sort((a, b) => {
+              const nameA = (
+                a.type === "group" ? a.name : getOtherParticipant(a)?.name || ""
+              ).toLowerCase();
+              const nameB = (
+                b.type === "group" ? b.name : getOtherParticipant(b)?.name || ""
+              ).toLowerCase();
+              return nameA.localeCompare(nameB);
+            });
+            break;
+          case "nameDesc":
+            filtered.sort((a, b) => {
+              const nameA = (
+                a.type === "group" ? a.name : getOtherParticipant(a)?.name || ""
+              ).toLowerCase();
+              const nameB = (
+                b.type === "group" ? b.name : getOtherParticipant(b)?.name || ""
+              ).toLowerCase();
+              return nameB.localeCompare(nameA);
+            });
+            break;
+          case "lastMessage":
+          default:
+            // Already sorted by updatedAt from backend
+            break;
+        }
+      }
+
+      return filtered;
+    }, [conversations, searchQuery, showUnreadOnly, sortBy]);
+
+    return (
+      <>
+        <div className="bg-card p-4 border-b border-border">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Avatar>
+                <AvatarImage src={sessionUser.image} />
+                <AvatarFallback>{sessionUser.name?.[0]}</AvatarFallback>
+              </Avatar>
+              <div className="hidden sm:block">
+                <h2 className="font-semibold text-sm">{sessionUser.name}</h2>
+                <p className="text-xs text-muted-foreground">Online</p>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={onOpenSettings}
+                title="Settings"
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={onOpenNewChat}
+              >
+                <UserPlus className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={onOpenCreateGroup}
+              >
+                <Users className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={onSignOut}
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+          <SearchInput
+            value={searchQuery}
+            onChange={onSearchChange}
+            onClear={onSearchClear}
+          />
+        </div>
+
+        {/* Filter and Sort Bar */}
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-border">
+          <Button
+            variant={showUnreadOnly ? "default" : "ghost"}
+            size="sm"
+            className="h-8 text-xs"
+            onClick={onToggleUnreadOnly}
+          >
+            <Filter className="w-3 h-3 mr-1" />
+            Unread
+            {showUnreadOnly &&
+              conversations.filter((c) => c.hasUnread).length > 0 && (
+                <span className="ml-1 bg-primary-foreground text-primary rounded-full px-1.5 text-xs font-semibold">
+                  {conversations.filter((c) => c.hasUnread).length}
+                </span>
+              )}
+          </Button>
+
+          <div className="flex items-center gap-1 ml-auto">
+            <Button
+              variant={sortBy === "nameAsc" ? "default" : "ghost"}
+              size="sm"
+              className="h-8 px-2"
+              onClick={() =>
+                onSetSortBy(sortBy === "nameAsc" ? "lastMessage" : "nameAsc")
+              }
+              title="Sort A-Z"
+            >
+              <SortAsc className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={sortBy === "nameDesc" ? "default" : "ghost"}
+              size="sm"
+              className="h-8 px-2"
+              onClick={() =>
+                onSetSortBy(sortBy === "nameDesc" ? "lastMessage" : "nameDesc")
+              }
+              title="Sort Z-A"
+            >
+              <SortDesc className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={sortBy === "lastMessage" ? "default" : "ghost"}
+              size="sm"
+              className="h-8 px-2"
+              onClick={() => onSetSortBy("lastMessage")}
+              title="Sort by recent"
+            >
+              <Clock className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        <ScrollArea className="flex-1">
+          {filteredAndSortedConversations.length === 0 ? (
+            <div className="p-8 text-center">
+              <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-sm">
+                {searchQuery
+                  ? "No conversations found"
+                  : "No conversations yet"}
+              </p>
+              {!searchQuery && (
+                <Button variant="link" className="mt-2" onClick={onOpenNewChat}>
+                  Start a new chat
+                </Button>
+              )}
+            </div>
+          ) : (
+            filteredAndSortedConversations.map((conv) => {
+              const other = getOtherParticipant(conv);
+              const isOnline = other && isUserOnline(other._id);
+              const isSelected = selectedConversation?._id === conv._id;
+              const hasUnread = conv.hasUnread && !isSelected; // Don't show unread if selected
+              const unreadCount = isSelected ? 0 : conv.unreadCount || 0;
+
+              return (
+                <div
+                  key={conv._id}
+                  className={`p-3 sm:p-4 hover:bg-accent cursor-pointer transition-colors relative ${
+                    isSelected ? "bg-accent border-l-4 border-primary" : ""
+                  }`}
+                  onClick={() => onSelectConversation(conv)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
+                        <AvatarImage
+                          src={
+                            conv.type === "group" ? conv.avatar : other?.avatar
+                          }
+                        />
+                        <AvatarFallback>
+                          {conv.type === "group"
+                            ? conv.name?.[0]
+                            : other?.name?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      {conv.type === "direct" && isOnline && (
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <h3
+                            className={`font-semibold truncate text-sm sm:text-base ${
+                              hasUnread ? "text-foreground" : ""
+                            }`}
+                          >
+                            {conv.type === "group" ? conv.name : other?.name}
+                          </h3>
+                          {conv.type === "group" && (
+                            <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs text-muted-foreground">
+                            {conv.updatedAt &&
+                              new Date(conv.updatedAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                          </span>
+
+                          {/* UNREAD BADGE */}
+                          {hasUnread && unreadCount > 0 && (
+                            <div className="bg-primary text-primary-foreground text-xs font-semibold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
+                              {unreadCount > 99 ? "99+" : unreadCount}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <p
+                        className={`text-sm truncate ${
+                          hasUnread
+                            ? "text-foreground font-medium"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {conv.lastMessage || "No messages yet"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </ScrollArea>
+      </>
+    );
+  }
+);
+
+// --- Main Component ---
+
 export default function ChatLayout({ session }) {
   const [conversations, setConversations] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +421,18 @@ export default function ChatLayout({ session }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
-  const [sortBy, setSortBy] = useState("lastMessage"); // "lastMessage" | "nameAsc" | "nameDesc"
+  const [sortBy, setSortBy] = useState("lastMessage");
+
+  // Search Handlers (Moved BACK INSIDE the component where they belong)
+  const handleSearchChange = useCallback((e) => {
+    setSearchQuery(e.target.value);
+  }, []);
+
+  const handleSearchClear = useCallback(() => {
+    setSearchQuery("");
+  }, []);
+
+  // ... (Rest of your Effects, Socket init, and helper functions stay the same)
 
   // Request notification permission
   useEffect(() => {
@@ -121,82 +479,9 @@ export default function ChatLayout({ session }) {
     };
   }, []);
 
-  const filteredAndSortedConversations = useMemo(() => {
-    let filtered = [...conversations];
-
-    // Apply unread filter
-    if (showUnreadOnly) {
-      filtered = filtered.filter(
-        (conv) => conv.hasUnread && conv.unreadCount > 0
-      );
-    }
-
-    // Apply search filter with scoring
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-
-      filtered = filtered
-        .map((conv) => {
-          const other = getOtherParticipant(conv);
-          const name = (conv.type === "group" ? conv.name : other?.name) || "";
-          const email = other?.email || "";
-          const lastMessage = conv.lastMessage || "";
-
-          let score = 0;
-          const nameLower = name.toLowerCase();
-          const emailLower = email.toLowerCase();
-          const messageLower = lastMessage.toLowerCase();
-
-          // Higher priority for name matches
-          if (nameLower.includes(query)) score += 10;
-          if (nameLower.startsWith(query)) score += 5;
-
-          // Medium priority for email matches
-          if (emailLower.includes(query)) score += 3;
-
-          // Lower priority for message matches
-          if (messageLower.includes(query)) score += 1;
-
-          return { ...conv, searchScore: score };
-        })
-        .filter((conv) => conv.searchScore > 0)
-        .sort((a, b) => b.searchScore - a.searchScore);
-    }
-
-    // Apply sorting (only if not searching)
-    if (!searchQuery.trim()) {
-      switch (sortBy) {
-        case "nameAsc":
-          filtered.sort((a, b) => {
-            const nameA = (
-              a.type === "group" ? a.name : getOtherParticipant(a)?.name || ""
-            ).toLowerCase();
-            const nameB = (
-              b.type === "group" ? b.name : getOtherParticipant(b)?.name || ""
-            ).toLowerCase();
-            return nameA.localeCompare(nameB);
-          });
-          break;
-        case "nameDesc":
-          filtered.sort((a, b) => {
-            const nameA = (
-              a.type === "group" ? a.name : getOtherParticipant(a)?.name || ""
-            ).toLowerCase();
-            const nameB = (
-              b.type === "group" ? b.name : getOtherParticipant(b)?.name || ""
-            ).toLowerCase();
-            return nameB.localeCompare(nameA);
-          });
-          break;
-        case "lastMessage":
-        default:
-          // Already sorted by updatedAt from backend
-          break;
-      }
-    }
-
-    return filtered;
-  }, [conversations, searchQuery, showUnreadOnly, sortBy]);
+  const isUserOnline = (userId) => {
+    return onlineUsers.has(userId);
+  };
 
   const formatLastSeen = (userId) => {
     if (isUserOnline(userId)) {
@@ -283,13 +568,11 @@ export default function ChatLayout({ session }) {
       console.error("Socket connection error:", error);
     });
 
-    // CRITICAL FIX: Handle initial online users list
     socket.on("users:online-list", ({ onlineUsers }) => {
       console.log("📋 Received online users list:", onlineUsers);
       setOnlineUsers(new Set(onlineUsers));
     });
 
-    // CRITICAL FIX: Handle individual user status changes
     socket.on("user:status", ({ userId, status }) => {
       console.log(`👤 User ${userId} is now ${status}`);
       setOnlineUsers((prev) => {
@@ -299,7 +582,6 @@ export default function ChatLayout({ session }) {
         } else {
           updated.delete(userId);
         }
-        console.log("📊 Updated online users:", Array.from(updated));
         return updated;
       });
     });
@@ -307,7 +589,6 @@ export default function ChatLayout({ session }) {
     socket.on("message:new", (message) => {
       console.log("📨 New message received:", message);
 
-      // Show notification if message is from someone else and not viewing their chat
       if (
         message.senderId !== session.user.id &&
         (!selectedConversation ||
@@ -318,9 +599,6 @@ export default function ChatLayout({ session }) {
 
       setSelectedConversation((currentConv) => {
         if (currentConv && message.conversationId === currentConv._id) {
-          // ✅ CASE 1: Currently viewing this conversation
-          console.log("👀 User is viewing this conversation");
-
           setMessages((prevMessages) => {
             if (prevMessages.some((m) => m._id === message._id)) {
               return prevMessages;
@@ -328,9 +606,7 @@ export default function ChatLayout({ session }) {
             return [...prevMessages, message];
           });
 
-          // If message from someone else, mark as read IMMEDIATELY
           if (message.senderId !== session.user.id) {
-            console.log("📖 Marking message as read immediately");
             setTimeout(() => {
               socket.emit("message:read", {
                 messageId: message._id,
@@ -348,10 +624,6 @@ export default function ChatLayout({ session }) {
             }, 100);
           }
         } else if (message.senderId !== session.user.id) {
-          // ✅ CASE 2: NOT viewing this conversation, but user is online
-          console.log("📱 User is online but NOT viewing this conversation");
-
-          // Mark as delivered since user is online (just not viewing this chat)
           setTimeout(() => {
             socket.emit("message:delivered", {
               messageId: message._id,
@@ -372,12 +644,10 @@ export default function ChatLayout({ session }) {
         return currentConv;
       });
 
-      // Reload conversations to update unread count and last message
       loadConversations();
     });
 
     socket.on("message:status", ({ messageId, status }) => {
-      console.log(`📝 Message ${messageId} status: ${status}`);
       setMessages((prev) =>
         prev.map((msg) => (msg._id === messageId ? { ...msg, status } : msg))
       );
@@ -393,25 +663,19 @@ export default function ChatLayout({ session }) {
         conversationId,
         isLastMessage,
       }) => {
-        console.log("✏️ Message edited received:", messageId, content);
-
-        // Update the message in the messages list
         setMessages((prev) =>
           prev.map((msg) =>
             msg._id === messageId ? { ...msg, content, edited, editedAt } : msg
           )
         );
 
-        // **FIX: Only update sidebar if it's the last message** ✅
         if (isLastMessage) {
           setConversations((prevConversations) =>
             prevConversations.map((conv) => {
               if (conv._id === conversationId) {
-                // Check if user is currently viewing this conversation
                 const isCurrentlyViewing =
                   selectedConversation?._id === conversationId;
 
-                // If user is NOT viewing, increment unread count
                 if (!isCurrentlyViewing) {
                   return {
                     ...conv,
@@ -422,7 +686,6 @@ export default function ChatLayout({ session }) {
                   };
                 }
 
-                // If viewing, just update the message text
                 return {
                   ...conv,
                   lastMessage: content,
@@ -439,12 +702,8 @@ export default function ChatLayout({ session }) {
     socket.on(
       "message:deleted",
       ({ messageId, conversationId, newLastMessage }) => {
-        console.log("🗑️ Message deleted received:", messageId);
-
-        // Remove message from the messages list
         setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
 
-        // Update conversation's lastMessage in sidebar
         setConversations((prevConversations) =>
           prevConversations.map((conv) =>
             conv._id === conversationId
@@ -460,7 +719,6 @@ export default function ChatLayout({ session }) {
     );
 
     socket.on("user:typing", ({ userId }) => {
-      console.log(`⌨️ User ${userId} is typing`);
       setIsTyping(true);
     });
 
@@ -492,7 +750,6 @@ export default function ChatLayout({ session }) {
     });
 
     socket.on("call:rejected", ({ callId }) => {
-      // Only show toast if we were the caller (the one who got rejected)
       if (activeCall && activeCall._id === callId) {
         toast.error("Call was rejected");
         setIsCallModalOpen(false);
@@ -501,8 +758,6 @@ export default function ChatLayout({ session }) {
     });
 
     socket.on("call:ended", ({ callId }) => {
-      // Only show toast if we didn't end the call ourselves
-      // (the other person ended it)
       if (activeCall && activeCall._id === callId) {
         toast.info("Call ended");
         setIsCallModalOpen(false);
@@ -511,7 +766,6 @@ export default function ChatLayout({ session }) {
     });
 
     socket.on("message:reaction-update", ({ messageId, reactions }) => {
-      console.log("👍 Reaction updated for message:", messageId);
       setMessages((prev) =>
         prev.map((msg) => (msg._id === messageId ? { ...msg, reactions } : msg))
       );
@@ -543,7 +797,6 @@ export default function ChatLayout({ session }) {
       socket?.emit("conversation:join", selectedConversation._id);
       setShowMobileChat(true);
 
-      // IMPORTANT: Clear unread count immediately when opening conversation
       setConversations((prevConversations) =>
         prevConversations.map((conv) =>
           conv._id === selectedConversation._id
@@ -569,7 +822,6 @@ export default function ChatLayout({ session }) {
       const response = await fetch("/api/conversations");
       const data = await response.json();
       if (response.ok) {
-        // Add unread count to each conversation
         const conversationsWithUnread = data.conversations.map((conv) => ({
           ...conv,
           unreadCount: conv.unreadCount || 0,
@@ -590,16 +842,11 @@ export default function ChatLayout({ session }) {
       if (response.ok) {
         setMessages(data.messages);
 
-        // Find all unread messages (messages from others that aren't read)
         const unreadMessages = data.messages.filter(
           (msg) => msg.senderId !== session.user.id && msg.status !== "read"
         );
 
-        console.log(`📖 Marking ${unreadMessages.length} messages as read`);
-
-        // Batch mark as read
         if (unreadMessages.length > 0) {
-          // Emit bulk read event
           if (socket && socket.connected) {
             socket.emit("messages:mark-read", {
               messageIds: unreadMessages.map((m) => m._id),
@@ -607,7 +854,6 @@ export default function ChatLayout({ session }) {
             });
           }
 
-          // Update in database
           for (const msg of unreadMessages) {
             fetch("/api/messages/status", {
               method: "PATCH",
@@ -627,11 +873,10 @@ export default function ChatLayout({ session }) {
     if (!messageInput.trim() || !selectedConversation) return;
 
     const messageContent = messageInput.trim();
-    const replyToId = replyingTo?._id || null; // Capture this BEFORE clearing state
+    const replyToId = replyingTo?._id || null;
 
-    // Clear input and reply state immediately for better UX
     setMessageInput("");
-    const tempReplyingTo = replyingTo; // Store temporarily
+    const tempReplyingTo = replyingTo;
     setReplyingTo(null);
 
     try {
@@ -655,23 +900,20 @@ export default function ChatLayout({ session }) {
         });
 
         if (socket && socket.connected) {
-          // **ADD PARTICIPANTS TO THE EMITTED DATA**
           socket.emit("message:send", {
             ...data.message,
-            participants: selectedConversation.participants, // ADD THIS LINE
+            participants: selectedConversation.participants,
           });
         }
 
         loadConversations();
       } else {
-        // If send failed, restore the reply state
         setReplyingTo(tempReplyingTo);
         setMessageInput(messageContent);
         toast.error("Failed to send message");
       }
     } catch (error) {
       console.error("Message send error:", error);
-      // Restore state on error
       setReplyingTo(tempReplyingTo);
       setMessageInput(messageContent);
       toast.error("Failed to send message");
@@ -715,8 +957,6 @@ export default function ChatLayout({ session }) {
   const handleMediaUploaded = async (media) => {
     if (!selectedConversation) return;
 
-    console.log("📤 Sending media message:", media);
-
     try {
       const response = await fetch("/api/messages", {
         method: "POST",
@@ -734,24 +974,17 @@ export default function ChatLayout({ session }) {
       const data = await response.json();
 
       if (response.ok) {
-        console.log("✅ Media message created:", data.message);
-        console.log("🔗 Media URL:", data.message.mediaUrl);
-
-        // Add to local messages
         setMessages((prev) => [...prev, data.message]);
 
-        // **FIX: Emit with participants array** ✅
         if (socket && socket.connected) {
           socket.emit("message:send", {
             ...data.message,
-            participants: selectedConversation.participants, // ✅ ADD THIS LINE
+            participants: selectedConversation.participants,
           });
         }
 
-        // Refresh conversations
         loadConversations();
       } else {
-        console.error("❌ Failed to create media message:", data);
         toast.error(data.error || "Failed to send media");
       }
     } catch (error) {
@@ -793,14 +1026,6 @@ export default function ChatLayout({ session }) {
     }
   };
 
-  const getOtherParticipant = (conversation) => {
-    return conversation.participantDetails?.[0];
-  };
-
-  const isUserOnline = (userId) => {
-    return onlineUsers.has(userId);
-  };
-
   const getMessageStatusIcon = (message) => {
     if (message.senderId !== session.user.id) return null;
 
@@ -818,240 +1043,6 @@ export default function ChatLayout({ session }) {
     setSelectedConversation(null);
   };
 
-  const SidebarContent = () => (
-    <>
-      <div className="bg-card p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src={session.user.image} />
-              <AvatarFallback>{session.user.name?.[0]}</AvatarFallback>
-            </Avatar>
-            <div className="hidden sm:block">
-              <h2 className="font-semibold text-sm">{session.user.name}</h2>
-              <p className="text-xs text-muted-foreground">Online</p>
-            </div>
-          </div>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setIsSettingsOpen(true)}
-              title="Settings"
-            >
-              <Settings className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setIsNewChatOpen(true)}
-            >
-              <UserPlus className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setIsCreateGroupOpen(true)}
-            >
-              <Users className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => signOut()}
-            >
-              <LogOut className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search conversations..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1 h-8 w-8"
-              onClick={() => setSearchQuery("")}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Filter and Sort Bar */}
-      <div className="flex items-center gap-1 px-4 py-2 border-b border-border">
-        <Button
-          variant={showUnreadOnly ? "default" : "ghost"}
-          size="sm"
-          className="h-8 text-xs"
-          onClick={() => setShowUnreadOnly(!showUnreadOnly)}
-        >
-          <Filter className="w-3 h-3 mr-1" />
-          Unread
-          {showUnreadOnly &&
-            conversations.filter((c) => c.hasUnread).length > 0 && (
-              <span className="ml-1 bg-primary-foreground text-primary rounded-full px-1.5 text-xs font-semibold">
-                {conversations.filter((c) => c.hasUnread).length}
-              </span>
-            )}
-        </Button>
-
-        <div className="flex items-center gap-1 ml-auto">
-          <Button
-            variant={sortBy === "nameAsc" ? "default" : "ghost"}
-            size="sm"
-            className="h-8 px-2"
-            onClick={() =>
-              setSortBy(sortBy === "nameAsc" ? "lastMessage" : "nameAsc")
-            }
-            title="Sort A-Z"
-          >
-            <SortAsc className="w-4 h-4" />
-          </Button>
-          <Button
-            variant={sortBy === "nameDesc" ? "default" : "ghost"}
-            size="sm"
-            className="h-8 px-2"
-            onClick={() =>
-              setSortBy(sortBy === "nameDesc" ? "lastMessage" : "nameDesc")
-            }
-            title="Sort Z-A"
-          >
-            <SortDesc className="w-4 h-4" />
-          </Button>
-          <Button
-            variant={sortBy === "lastMessage" ? "default" : "ghost"}
-            size="sm"
-            className="h-8 px-2"
-            onClick={() => setSortBy("lastMessage")}
-            title="Sort by recent"
-          >
-            <Clock className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      <ScrollArea className="flex-1">
-        {filteredAndSortedConversations.length === 0 ? (
-          <div className="p-8 text-center">
-            <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-sm">
-              {searchQuery ? "No conversations found" : "No conversations yet"}
-            </p>
-            {!searchQuery && (
-              <Button
-                variant="link"
-                className="mt-2"
-                onClick={() => setIsNewChatOpen(true)}
-              >
-                Start a new chat
-              </Button>
-            )}
-          </div>
-        ) : (
-          filteredAndSortedConversations.map((conv) => {
-            const other = getOtherParticipant(conv);
-            const isOnline = other && isUserOnline(other._id);
-            const isSelected = selectedConversation?._id === conv._id;
-            const hasUnread = conv.hasUnread && !isSelected; // Don't show unread if selected
-            const unreadCount = isSelected ? 0 : conv.unreadCount || 0;
-
-            console.log(`📊 Rendering conversation ${conv._id}:`, {
-              hasUnread,
-              unreadCount,
-              isSelected,
-            });
-
-            return (
-              <div
-                key={conv._id}
-                className={`p-3 sm:p-4 hover:bg-accent cursor-pointer transition-colors relative ${
-                  isSelected ? "bg-accent border-l-4 border-primary" : ""
-                }`}
-                onClick={() => setSelectedConversation(conv)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
-                      <AvatarImage
-                        src={
-                          conv.type === "group" ? conv.avatar : other?.avatar
-                        }
-                      />
-                      <AvatarFallback>
-                        {conv.type === "group"
-                          ? conv.name?.[0]
-                          : other?.name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    {conv.type === "direct" && isOnline && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <h3
-                          className={`font-semibold truncate text-sm sm:text-base ${
-                            hasUnread ? "text-foreground" : ""
-                          }`}
-                        >
-                          {conv.type === "group" ? conv.name : other?.name}
-                        </h3>
-                        {conv.type === "group" && (
-                          <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-xs text-muted-foreground">
-                          {conv.updatedAt &&
-                            new Date(conv.updatedAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                        </span>
-
-                        {/* UNREAD BADGE - Only show if not selected */}
-                        {hasUnread && unreadCount > 0 && (
-                          <div className="bg-primary text-primary-foreground text-xs font-semibold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
-                            {unreadCount > 99 ? "99+" : unreadCount}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <p
-                      className={`text-sm truncate ${
-                        hasUnread
-                          ? "text-foreground font-medium"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {conv.lastMessage || "No messages yet"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </ScrollArea>
-    </>
-  );
-
   const handleReaction = async (messageId, emoji) => {
     try {
       const response = await fetch("/api/messages/reactions", {
@@ -1068,7 +1059,6 @@ export default function ChatLayout({ session }) {
           reactions: data.reactions,
         });
 
-        // Update local state
         setMessages((prev) =>
           prev.map((msg) =>
             msg._id === messageId ? { ...msg, reactions: data.reactions } : msg
@@ -1081,7 +1071,6 @@ export default function ChatLayout({ session }) {
     }
   };
 
-  // Helper function to group reactions by emoji
   const groupReactions = (reactions = []) => {
     const grouped = {};
     reactions.forEach((reaction) => {
@@ -1117,7 +1106,6 @@ export default function ChatLayout({ session }) {
     const isOwn = message.senderId === session.user.id;
 
     const timer = setTimeout(() => {
-      // Trigger haptic feedback if available
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
@@ -1127,7 +1115,7 @@ export default function ChatLayout({ session }) {
         position: { x: touch.clientX, y: touch.clientY },
         isOwnMessage: isOwn,
       });
-    }, 500); // 500ms long press
+    }, 500);
 
     setLongPressTimer(timer);
   };
@@ -1144,7 +1132,6 @@ export default function ChatLayout({ session }) {
   };
 
   const handleReplyToMessage = (message) => {
-    // Find sender name from conversations
     let senderName = "Unknown";
 
     if (message.senderId === session.user.id) {
@@ -1161,7 +1148,6 @@ export default function ChatLayout({ session }) {
       senderName: senderName,
     });
 
-    // Focus on message input
     setTimeout(() => {
       const input = document.querySelector(
         'input[placeholder="Type a message..."]'
@@ -1177,13 +1163,11 @@ export default function ChatLayout({ session }) {
   };
 
   const handleEditMessage = (message) => {
-    // Only allow editing text messages
     if (message.type !== "text") {
       toast.error("Only text messages can be edited");
       return;
     }
 
-    // Only allow editing own messages
     if (message.senderId !== session.user.id) {
       toast.error("You can only edit your own messages");
       return;
@@ -1195,12 +1179,10 @@ export default function ChatLayout({ session }) {
   };
 
   const handleMessageEdited = (editedMessage, isLastMessage) => {
-    // Update local state
     setMessages((prev) =>
       prev.map((msg) => (msg._id === editedMessage._id ? editedMessage : msg))
     );
 
-    // Emit socket event to update for other users
     if (socket && socket.connected) {
       socket.emit("message:edit", {
         messageId: editedMessage._id,
@@ -1208,11 +1190,10 @@ export default function ChatLayout({ session }) {
         content: editedMessage.content,
         edited: editedMessage.edited,
         editedAt: editedMessage.editedAt,
-        isLastMessage: isLastMessage, // ✅ Pass this info
+        isLastMessage: isLastMessage,
       });
     }
 
-    // **FIX: Update sidebar immediately if it's the last message** ✅
     if (isLastMessage) {
       setConversations((prevConversations) =>
         prevConversations.map((conv) => {
@@ -1250,12 +1231,10 @@ export default function ChatLayout({ session }) {
 
       const data = await response.json();
       if (response.ok) {
-        // Remove message from local state
         setMessages((prev) =>
           prev.filter((msg) => msg._id !== deletingMessage._id)
         );
 
-        // Update sidebar
         setConversations((prevConversations) =>
           prevConversations.map((conv) =>
             conv._id === selectedConversation._id
@@ -1268,7 +1247,6 @@ export default function ChatLayout({ session }) {
           )
         );
 
-        // Emit socket event to notify other users
         if (socket && socket.connected) {
           socket.emit("message:delete", {
             messageId: deletingMessage._id,
@@ -1294,7 +1272,25 @@ export default function ChatLayout({ session }) {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <div className="hidden md:flex md:w-80 lg:w-96 border-r border-border flex-col">
-        <SidebarContent />
+        <SidebarContent
+          sessionUser={session.user}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          onSearchClear={handleSearchClear}
+          conversations={conversations}
+          selectedConversation={selectedConversation}
+          onSelectConversation={setSelectedConversation}
+          showUnreadOnly={showUnreadOnly}
+          onToggleUnreadOnly={() => setShowUnreadOnly(!showUnreadOnly)}
+          sortBy={sortBy}
+          onSetSortBy={setSortBy}
+          isUserOnline={isUserOnline}
+          getOtherParticipant={getOtherParticipant} // Passed as prop
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenNewChat={() => setIsNewChatOpen(true)}
+          onOpenCreateGroup={() => setIsCreateGroupOpen(true)}
+          onSignOut={signOut}
+        />
       </div>
 
       <div
@@ -1302,7 +1298,25 @@ export default function ChatLayout({ session }) {
           showMobileChat ? "hidden" : "flex"
         } md:hidden w-full flex-col`}
       >
-        <SidebarContent />
+        <SidebarContent
+          sessionUser={session.user}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          onSearchClear={handleSearchClear}
+          conversations={conversations}
+          selectedConversation={selectedConversation}
+          onSelectConversation={setSelectedConversation}
+          showUnreadOnly={showUnreadOnly}
+          onToggleUnreadOnly={() => setShowUnreadOnly(!showUnreadOnly)}
+          sortBy={sortBy}
+          onSetSortBy={setSortBy}
+          isUserOnline={isUserOnline}
+          getOtherParticipant={getOtherParticipant} // Passed as prop
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenNewChat={() => setIsNewChatOpen(true)}
+          onOpenCreateGroup={() => setIsCreateGroupOpen(true)}
+          onSignOut={signOut}
+        />
       </div>
 
       <div
@@ -1390,15 +1404,6 @@ export default function ChatLayout({ session }) {
                 const isOwn = message.senderId === session.user.id;
                 const groupedReactions = groupReactions(message.reactions);
 
-                // Debug log
-                if (message.type === "image") {
-                  console.log("🖼️ Rendering image message:", {
-                    messageId: message._id,
-                    mediaUrl: message.mediaUrl,
-                    type: message.type,
-                  });
-                }
-
                 return (
                   <div
                     key={message._id}
@@ -1467,7 +1472,7 @@ export default function ChatLayout({ session }) {
                           </div>
                         )}
 
-                        {/* IMAGE MESSAGE - CRITICAL FIX */}
+                        {/* IMAGE MESSAGE */}
                         {message.type === "image" && message.mediaUrl && (
                           <div className="mb-2">
                             <img
@@ -1483,7 +1488,6 @@ export default function ChatLayout({ session }) {
                                   message.mediaUrl
                                 );
                                 e.target.style.display = "none";
-                                // Show error message
                                 const errorDiv = document.createElement("div");
                                 errorDiv.className = "text-xs text-red-500 p-2";
                                 errorDiv.textContent = "Failed to load image";
