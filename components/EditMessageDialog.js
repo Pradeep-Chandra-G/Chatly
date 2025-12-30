@@ -62,7 +62,8 @@ export default function EditMessageDialog({
       const data = await response.json();
       if (response.ok) {
         toast.success("Message edited");
-        onMessageEdited(data.message);
+        // **FIX: Pass both the message AND whether it's the last message** ✅
+        onMessageEdited(data.message, data.isLastMessage);
         onClose();
       } else {
         toast.error(data.error || "Failed to edit message");

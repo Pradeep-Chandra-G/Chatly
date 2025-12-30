@@ -320,7 +320,14 @@ export default function ChatLayout({ session }) {
 
     socket.on(
       "message:edited",
-      ({ messageId, content, edited, editedAt, conversationId }) => {
+      ({
+        messageId,
+        content,
+        edited,
+        editedAt,
+        conversationId,
+        isLastMessage,
+      }) => {
         console.log("✏️ Message edited received:", messageId, content);
 
         // Update the message in the messages list
@@ -330,18 +337,37 @@ export default function ChatLayout({ session }) {
           )
         );
 
-        // Update the conversation's lastMessage in sidebar
-        setConversations((prevConversations) =>
-          prevConversations.map((conv) =>
-            conv._id === conversationId
-              ? {
+        // **FIX: Only update sidebar if it's the last message** ✅
+        if (isLastMessage) {
+          setConversations((prevConversations) =>
+            prevConversations.map((conv) => {
+              if (conv._id === conversationId) {
+                // Check if user is currently viewing this conversation
+                const isCurrentlyViewing =
+                  selectedConversation?._id === conversationId;
+
+                // If user is NOT viewing, increment unread count
+                if (!isCurrentlyViewing) {
+                  return {
+                    ...conv,
+                    lastMessage: content,
+                    updatedAt: new Date().toISOString(),
+                    unreadCount: (conv.unreadCount || 0) + 1,
+                    hasUnread: true,
+                  };
+                }
+
+                // If viewing, just update the message text
+                return {
                   ...conv,
                   lastMessage: content,
                   updatedAt: new Date().toISOString(),
-                }
-              : conv
-          )
-        );
+                };
+              }
+              return conv;
+            })
+          );
+        }
       }
     );
 
@@ -634,7 +660,7 @@ export default function ChatLayout({ session }) {
           conversationId: selectedConversation._id,
           content: media.fileName || "Media file",
           type: media.type,
-          mediaUrl: media.url, // This should be the full Cloudinary URL
+          mediaUrl: media.url,
           fileName: media.fileName,
           fileSize: media.fileSize,
         }),
@@ -646,13 +672,16 @@ export default function ChatLayout({ session }) {
         console.log("✅ Media message created:", data.message);
         console.log("🔗 Media URL:", data.message.mediaUrl);
 
-        // Emit to socket
-        if (socket && socket.connected) {
-          socket.emit("message:send", data.message);
-        }
-
         // Add to local messages
         setMessages((prev) => [...prev, data.message]);
+
+        // **FIX: Emit with participants array** ✅
+        if (socket && socket.connected) {
+          socket.emit("message:send", {
+            ...data.message,
+            participants: selectedConversation.participants, // ✅ ADD THIS LINE
+          });
+        }
 
         // Refresh conversations
         loadConversations();
@@ -1047,8 +1076,7 @@ export default function ChatLayout({ session }) {
     closeContextMenu();
   };
 
-  // 5. ADD handleMessageEdited FUNCTION (new function)
-  const handleMessageEdited = (editedMessage) => {
+  const handleMessageEdited = (editedMessage, isLastMessage) => {
     // Update local state
     setMessages((prev) =>
       prev.map((msg) => (msg._id === editedMessage._id ? editedMessage : msg))
@@ -1062,26 +1090,25 @@ export default function ChatLayout({ session }) {
         content: editedMessage.content,
         edited: editedMessage.edited,
         editedAt: editedMessage.editedAt,
+        isLastMessage: isLastMessage, // ✅ Pass this info
       });
     }
 
-    // **NEW: Update sidebar if this was the last message**
-    setConversations((prevConversations) =>
-      prevConversations.map((conv) => {
-        if (conv._id === selectedConversation._id) {
-          // Check if this message is the last one
-          const lastMsg = messages[messages.length - 1];
-          if (lastMsg && lastMsg._id === editedMessage._id) {
+    // **FIX: Update sidebar immediately if it's the last message** ✅
+    if (isLastMessage) {
+      setConversations((prevConversations) =>
+        prevConversations.map((conv) => {
+          if (conv._id === selectedConversation._id) {
             return {
               ...conv,
               lastMessage: editedMessage.content,
               updatedAt: new Date().toISOString(),
             };
           }
-        }
-        return conv;
-      })
-    );
+          return conv;
+        })
+      );
+    }
   };
 
   const handleDeleteMessage = (message) => {
