@@ -59,7 +59,7 @@ export async function PATCH(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, email, avatar } = await request.json();
+    const { name, email, avatar, avatarPublicId } = await request.json();
 
     if (!name || !email) {
       return NextResponse.json(
@@ -101,6 +101,11 @@ export async function PATCH(request) {
 
     if (avatar) {
       updateData.avatar = avatar;
+
+      // Store Cloudinary public ID for future deletion/updates
+      if (avatarPublicId) {
+        updateData.avatarPublicId = avatarPublicId;
+      }
     }
 
     await db

@@ -1448,6 +1448,7 @@ export default function ChatLayout({ session }) {
               <div className="flex gap-2">
                 <MediaUpload
                   onMediaUploaded={handleMediaUploaded}
+                  conversationId={selectedConversation?._id}
                   disabled={!selectedConversation}
                 />
                 <Input

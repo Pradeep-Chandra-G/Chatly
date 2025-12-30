@@ -1,3 +1,4 @@
+// components/MediaUpload.js
 "use client";
 
 import { useRef, useState } from "react";
@@ -11,7 +12,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
-export default function MediaUpload({ onMediaUploaded, disabled }) {
+export default function MediaUpload({
+  onMediaUploaded,
+  disabled,
+  conversationId,
+}) {
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -39,31 +44,33 @@ export default function MediaUpload({ onMediaUploaded, disabled }) {
       const formData = new FormData();
       formData.append("file", file);
 
+      // Pass conversationId for organized folder structure
+      if (conversationId) {
+        formData.append("conversationId", conversationId);
+      }
+
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
 
       const data = await response.json();
-
       if (response.ok) {
-        console.log("✅ Upload successful, Cloudinary URL:", data.url);
-
-        // IMPORTANT: Pass the exact URL from Cloudinary
         onMediaUploaded({
           type: type === "image" ? "image" : "file",
-          url: data.url, // This should be the Cloudinary URL
-          fileName: data.filename || file.name,
-          fileSize: data.size || file.size,
+          url: data.url,
+          publicId: data.publicId,
+          fileName: data.filename,
+          fileSize: data.size,
+          width: data.width,
+          height: data.height,
         });
-
         toast.success("File uploaded successfully");
       } else {
-        console.error("❌ Upload failed:", data.error);
         toast.error(data.error || "Upload failed");
       }
     } catch (error) {
-      console.error("❌ Upload error:", error);
+      console.error("Upload error:", error);
       toast.error("Failed to upload file");
     } finally {
       setIsUploading(false);
@@ -79,7 +86,7 @@ export default function MediaUpload({ onMediaUploaded, disabled }) {
         type="file"
         className="hidden"
         onChange={(e) => handleFileChange(e, "file")}
-        accept=".pdf,.doc,.docx,.txt,.zip"
+        accept=".pdf,.doc,.docx,.txt,.zip,.xlsx,.xls,.ppt,.pptx"
       />
       <input
         ref={imageInputRef}

@@ -27,6 +27,7 @@ export default function UserSettingsDialog({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [avatar, setAvatar] = useState("");
+  const [avatarPublicId, setAvatarPublicId] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
@@ -65,7 +66,8 @@ export default function UserSettingsDialog({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/upload", {
+      // Use dedicated avatar upload endpoint
+      const response = await fetch("/api/upload/avatar", {
         method: "POST",
         body: formData,
       });
@@ -73,7 +75,11 @@ export default function UserSettingsDialog({
       const data = await response.json();
       if (response.ok) {
         setAvatar(data.url);
+        setAvatarPublicId(data.publicId);
         toast.success("Profile picture uploaded");
+
+        // Force session update to show new avatar immediately
+        await updateSession();
       } else {
         toast.error(data.error || "Upload failed");
       }
@@ -113,13 +119,13 @@ export default function UserSettingsDialog({
           name: name.trim(),
           email: email.trim(),
           avatar,
+          avatarPublicId,
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        // Force session update by calling without parameters
-        // This triggers the JWT callback with trigger='update'
+        // Force session update
         await updateSession();
 
         toast.success("Profile updated successfully");
@@ -184,6 +190,10 @@ export default function UserSettingsDialog({
             />
             <p className="text-xs text-muted-foreground text-center px-4">
               Click the camera icon to upload a new profile picture
+              <br />
+              <span className="text-xs opacity-75">
+                Max 5MB • JPG, PNG, WebP
+              </span>
             </p>
           </div>
 
