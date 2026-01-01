@@ -452,6 +452,7 @@ export default function ChatLayout({ session }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
+  const lastReadMessageIdRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const selectedConversationRef = useRef(selectedConversation);
   const notificationPermission = useRef(false);
@@ -935,6 +936,7 @@ export default function ChatLayout({ session }) {
     if (selectedConversation) {
       setHasMore(true); // Reset hasMore
       setMessages([]); // Clear previous messages immediately
+      lastReadMessageIdRef.current = null; // Reset read tracker
       loadMessages(selectedConversation._id, false); // Load new ones
       socket?.emit("conversation:join", selectedConversation._id);
       setShowMobileChat(true);
@@ -998,7 +1000,11 @@ export default function ChatLayout({ session }) {
           if (messages.length > 0) {
             const lastMsg = messages[messages.length - 1];
             if (lastMsg.senderId !== session.user.id && lastMsg.status !== 'read') {
-              markAsRead(selectedConversation._id, messages);
+              // Prevent duplicate calls for the same message loop
+              if (lastReadMessageIdRef.current !== lastMsg._id) {
+                lastReadMessageIdRef.current = lastMsg._id;
+                markAsRead(selectedConversation._id, messages);
+              }
             }
           }
         }
