@@ -42,12 +42,10 @@ export async function GET(request) {
     // Populate participant details and count unread messages
     const conversationsWithDetails = await Promise.all(
       conversations.map(async (conv) => {
-        const otherParticipants = conv.participants.filter(
-          (p) => p !== session.user.id
-        );
+        // FIX: Include ALL participants (including self) so Group Info works properly
         const participants = await db
           .collection("users")
-          .find({ _id: { $in: otherParticipants } })
+          .find({ _id: { $in: conv.participants } })
           .project({ password: 0 })
           .toArray();
 
@@ -58,7 +56,15 @@ export async function GET(request) {
           .find({
             conversationId: conv._id,
             senderId: { $ne: session.user.id }, // NOT sent by me
-            status: { $in: ["sent", "delivered"] }, // NOT read yet
+            $or: [
+              // Case 1: Detailed System - Message has 'readBy' array...
+              // AND Checking if my userId is NOT present in any object in that array.
+              // MongoDB: "readBy.userId": { $ne: id } returns true if no element has that userId.
+              { readBy: { $exists: true }, "readBy.userId": { $ne: session.user.id } },
+
+              // Case 2: Legacy System - Fallback
+              { readBy: { $exists: false }, status: { $in: ["sent", "delivered"] } }
+            ]
           })
           .toArray();
 
@@ -115,7 +121,24 @@ export async function POST(request) {
         });
 
       if (existingConversation) {
-        return NextResponse.json({ conversation: existingConversation });
+        // FIX: Populate participant details for existing conversation
+        const participants = await db
+          .collection("users")
+          .find({ _id: { $in: existingConversation.participants } })
+          .project({ password: 0 })
+          .toArray();
+
+        return NextResponse.json({
+          conversation: {
+            ...existingConversation,
+            participantDetails: participants,
+            // We can't easily get unread count here without a separate query, 
+            // but for "open existing chat" it's less critical. 
+            // The main list update will handle it eventually.
+            hasUnread: false,
+            unreadCount: 0
+          }
+        });
       }
     }
 

@@ -12,6 +12,32 @@ import {
 import { signOut } from "next-auth/react";
 import { io } from "socket.io-client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import MessageContextMenu from "@/components/MessageContextMenu";
 import ReplyPreview from "@/components/ReplyPreview";
@@ -51,14 +77,23 @@ import NewChatDialog from "@/components/NewChatDialog";
 import CreateGroupDialog from "@/components/CreateGroupDialog";
 import CallModal from "@/components/CallModal";
 import MediaUpload from "@/components/MediaUpload";
+import GroupInfoDialog from "@/components/GroupInfoDialog";
+import MessageInfoDialog from "@/components/MessageInfoDialog";
 
 let socket;
 let pingInterval;
 
 // --- Helper Functions (Moved outside to be accessible by both components) ---
 
-const getOtherParticipant = (conversation) => {
-  return conversation.participantDetails?.[0];
+const getOtherParticipant = (conversation, currentUserId) => {
+  if (!conversation?.participantDetails) return null;
+
+  const other = conversation.participantDetails.find(p => String(p._id) !== String(currentUserId));
+
+  if (!other) {
+    return conversation.participantDetails[0];
+  }
+  return other;
 };
 
 const SearchInput = ({ value, onChange, onClear }) => {
@@ -124,7 +159,7 @@ const SidebarContent = memo(
 
         filtered = filtered
           .map((conv) => {
-            const other = getOtherParticipant(conv);
+            const other = getOtherParticipant(conv, sessionUser.id);
             const name =
               (conv.type === "group" ? conv.name : other?.name) || "";
             const email = other?.email || "";
@@ -157,10 +192,10 @@ const SidebarContent = memo(
           case "nameAsc":
             filtered.sort((a, b) => {
               const nameA = (
-                a.type === "group" ? a.name : getOtherParticipant(a)?.name || ""
+                a.type === "group" ? a.name : getOtherParticipant(a, sessionUser.id)?.name || ""
               ).toLowerCase();
               const nameB = (
-                b.type === "group" ? b.name : getOtherParticipant(b)?.name || ""
+                b.type === "group" ? b.name : getOtherParticipant(b, sessionUser.id)?.name || ""
               ).toLowerCase();
               return nameA.localeCompare(nameB);
             });
@@ -168,10 +203,10 @@ const SidebarContent = memo(
           case "nameDesc":
             filtered.sort((a, b) => {
               const nameA = (
-                a.type === "group" ? a.name : getOtherParticipant(a)?.name || ""
+                a.type === "group" ? a.name : getOtherParticipant(a, sessionUser.id)?.name || ""
               ).toLowerCase();
               const nameB = (
-                b.type === "group" ? b.name : getOtherParticipant(b)?.name || ""
+                b.type === "group" ? b.name : getOtherParticipant(b, sessionUser.id)?.name || ""
               ).toLowerCase();
               return nameB.localeCompare(nameA);
             });
@@ -313,7 +348,7 @@ const SidebarContent = memo(
             </div>
           ) : (
             filteredAndSortedConversations.map((conv) => {
-              const other = getOtherParticipant(conv);
+              const other = getOtherParticipant(conv, sessionUser.id);
               const isOnline = other && isUserOnline(other._id);
               const isSelected = selectedConversation?._id === conv._id;
               const hasUnread = conv.hasUnread && !isSelected; // Don't show unread if selected
@@ -322,9 +357,8 @@ const SidebarContent = memo(
               return (
                 <div
                   key={conv._id}
-                  className={`p-3 sm:p-4 hover:bg-accent cursor-pointer transition-colors relative ${
-                    isSelected ? "bg-accent border-l-4 border-primary" : ""
-                  }`}
+                  className={`p-3 sm:p-4 hover:bg-accent cursor-pointer transition-colors relative ${isSelected ? "bg-accent border-l-4 border-primary" : ""
+                    }`}
                   onClick={() => onSelectConversation(conv)}
                 >
                   <div className="flex items-center gap-3">
@@ -350,9 +384,8 @@ const SidebarContent = memo(
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <h3
-                            className={`font-semibold truncate text-sm sm:text-base ${
-                              hasUnread ? "text-foreground" : ""
-                            }`}
+                            className={`font-semibold truncate text-sm sm:text-base ${hasUnread ? "text-foreground" : ""
+                              }`}
                           >
                             {conv.type === "group" ? conv.name : other?.name}
                           </h3>
@@ -380,11 +413,10 @@ const SidebarContent = memo(
                       </div>
 
                       <p
-                        className={`text-sm truncate ${
-                          hasUnread
-                            ? "text-foreground font-medium"
-                            : "text-muted-foreground"
-                        }`}
+                        className={`text-sm truncate ${hasUnread
+                          ? "text-foreground font-medium"
+                          : "text-muted-foreground"
+                          }`}
                       >
                         {conv.lastMessage || "No messages yet"}
                       </p>
@@ -409,7 +441,7 @@ export default function ChatLayout({ session }) {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState(new Set());
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
@@ -419,7 +451,9 @@ export default function ChatLayout({ session }) {
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef(null);
+  const messageInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const selectedConversationRef = useRef(selectedConversation);
   const notificationPermission = useRef(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [longPressTimer, setLongPressTimer] = useState(null);
@@ -433,6 +467,54 @@ export default function ChatLayout({ session }) {
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [sortBy, setSortBy] = useState("lastMessage");
   const [showScrollBottom, setShowScrollBottom] = useState(false);
+  const [newMessagesBelow, setNewMessagesBelow] = useState(0);
+  const [isMessageInfoOpen, setIsMessageInfoOpen] = useState(false);
+  const [selectedMessageForInfo, setSelectedMessageForInfo] = useState(null);
+
+  // Sync selectedConversation with conversations state
+  useEffect(() => {
+    if (selectedConversation) {
+      const updated = conversations.find((c) => c._id === selectedConversation._id);
+      if (updated && updated !== selectedConversation) {
+        setSelectedConversation(updated);
+      }
+    }
+  }, [conversations, selectedConversation]);
+
+  // Group UI State
+  const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
+  const [isLeaveGroupAlertOpen, setIsLeaveGroupAlertOpen] = useState(false);
+
+  const handleLeaveGroup = async () => {
+    if (!selectedConversation) return;
+
+    try {
+      // Note: We use the server-side session ID, but we can pass it as a query param or body for validation if needed.
+      // The API we fixed checks for (memberId === session.user.id).
+      const response = await fetch(
+        `/api/groups/${selectedConversation._id}/members?memberId=${session.user.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        toast.success("You have left the group");
+        setSelectedConversation(null);
+        setIsLeaveGroupAlertOpen(false);
+        setConversations((prev) =>
+          prev.filter((c) => c._id !== selectedConversation._id)
+        );
+        setShowMobileChat(false);
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to leave group");
+      }
+    } catch (error) {
+      console.error("Leave group error:", error);
+      toast.error("Failed to leave group");
+    }
+  };
 
   // New states for pagination and scroll
   const [hasMore, setHasMore] = useState(true);
@@ -470,22 +552,7 @@ export default function ChatLayout({ session }) {
     }
   }, [messages]);
 
-  const handleScroll = useCallback(
-    (e) => {
-      const container = e.target;
-      const { scrollTop, scrollHeight, clientHeight } = container;
-
-      // Logic 1: Load more messages (Existing)
-      if (scrollTop < 50 && hasMore && !isLoadingMore && messages.length > 0) {
-        loadMessages(selectedConversation._id, true);
-      }
-
-      // Logic 2: Show "Back to Bottom" button if user is 300px away from bottom
-      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-      setShowScrollBottom(distanceFromBottom > 300);
-    },
-    [hasMore, isLoadingMore, messages.length, selectedConversation]
-  );
+  // handleScroll logic moved to line ~1050 to consolidate functionality
 
   // Request notification permission
   useEffect(() => {
@@ -650,6 +717,50 @@ export default function ChatLayout({ session }) {
         showNotification("New Message", message.content);
       }
 
+      // Handling New Conversations (Real-time DM creation)
+      // Check if we already have this conversation in our list
+      const knowsConversation = conversations.some(c => c._id === message.conversationId);
+
+      if (!knowsConversation) {
+        console.log("🆕 New conversation detected! Fetching...");
+        // Force immediate fetch of conversations to populate the sidebar
+        loadConversations();
+      } else {
+        // Just refresh to update last message preview / unread counts
+        // Pass current conversation ID if we are looking at it, to prevent ghost unread count
+        const currentId = selectedConversationRef.current?._id;
+        const isViewing = currentId === message.conversationId;
+        loadConversations(isViewing ? currentId : null);
+      }
+
+      // Mark as Read logic (Visibility Based)
+      if (selectedConversationRef.current && selectedConversationRef.current._id === message.conversationId) {
+        if (message.senderId !== session.user.id) {
+          // Check if user is effectively viewing the bottom
+          // We use the helper defined below (hoisting works for functions but better to be safe)
+          // Since we can't easily access the helper from here due to closure scope of socket listener,
+          // we rely on the IntersectionObserver to handle the read receipt if we scroll to bottom.
+          // HERE we only decide whether to SCROLL.
+
+          // Note: We need to access the ref directly here
+          const viewport = scrollViewportRef.current;
+
+          let isAtBottom = true;
+          if (viewport) {
+            const diff = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+            isAtBottom = diff < 300;
+          }
+
+          if (isAtBottom) {
+            // User is watching the chat flow.
+            setTimeout(() => scrollToBottom("smooth"), 100);
+          } else {
+            setShowScrollBottom(true);
+            setNewMessagesBelow(prev => prev + 1);
+          }
+        }
+      }
+
       setSelectedConversation((currentConv) => {
         if (currentConv && message.conversationId === currentConv._id) {
           setMessages((prevMessages) => {
@@ -658,56 +769,10 @@ export default function ChatLayout({ session }) {
             }
             return [...prevMessages, message];
           });
-
-          // Auto scroll to bottom on new message if near bottom
-          // Or just let user scroll. Usually we scroll to bottom on new message.
-          if (messagesEndRef.current) {
-            setTimeout(
-              () =>
-                messagesEndRef.current.scrollIntoView({ behavior: "smooth" }),
-              100
-            );
-          }
-
-          if (message.senderId !== session.user.id) {
-            setTimeout(() => {
-              socket.emit("message:read", {
-                messageId: message._id,
-                conversationId: message.conversationId,
-              });
-
-              fetch("/api/messages/status", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  messageId: message._id,
-                  status: "read",
-                }),
-              }).catch(console.error);
-            }, 100);
-          }
-        } else if (message.senderId !== session.user.id) {
-          setTimeout(() => {
-            socket.emit("message:delivered", {
-              messageId: message._id,
-              conversationId: message.conversationId,
-            });
-
-            fetch("/api/messages/status", {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                messageId: message._id,
-                status: "delivered",
-              }),
-            }).catch(console.error);
-          }, 100);
+          // Legacy unconditional scroll REMOVED from here.
         }
-
         return currentConv;
       });
-
-      loadConversations();
     });
 
     socket.on("message:status", ({ messageId, status }) => {
@@ -771,22 +836,34 @@ export default function ChatLayout({ session }) {
           prevConversations.map((conv) =>
             conv._id === conversationId
               ? {
-                  ...conv,
-                  lastMessage: newLastMessage,
-                  updatedAt: new Date().toISOString(),
-                }
+                ...conv,
+                lastMessage: newLastMessage,
+                updatedAt: new Date().toISOString(),
+              }
               : conv
           )
         );
       }
     );
 
-    socket.on("user:typing", ({ userId }) => {
-      setIsTyping(true);
+    socket.on("user:typing", ({ userId, conversationId }) => {
+      if (conversationId === selectedConversationRef.current?._id) {
+        setTypingUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.add(userId);
+          return newSet;
+        });
+      }
     });
 
-    socket.on("user:stop-typing", () => {
-      setIsTyping(false);
+    socket.on("user:stop-typing", ({ userId, conversationId }) => {
+      if (conversationId === selectedConversationRef.current?._id) {
+        setTypingUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(userId);
+          return newSet;
+        });
+      }
     });
 
     socket.on("call:incoming", ({ callId, callerId, type, offer }) => {
@@ -869,6 +946,11 @@ export default function ChatLayout({ session }) {
             : conv
         )
       );
+
+      // Auto-focus the input
+      setTimeout(() => {
+        messageInputRef.current?.focus();
+      }, 50); // Small delay to ensure render
     }
 
     return () => {
@@ -876,7 +958,17 @@ export default function ChatLayout({ session }) {
         socket?.emit("conversation:leave", selectedConversation._id);
       }
     };
+    return () => {
+      if (selectedConversation) {
+        socket?.emit("conversation:leave", selectedConversation._id);
+      }
+    };
   }, [selectedConversation?._id]);
+
+  // Update ref whenever selectedConversation changes
+  useEffect(() => {
+    selectedConversationRef.current = selectedConversation;
+  }, [selectedConversation]);
 
   const loadConversations = async () => {
     try {
@@ -891,6 +983,107 @@ export default function ChatLayout({ session }) {
       }
     } catch (error) {
       console.error("Error loading conversations:", error);
+    }
+  };
+
+  // Visibility-Based Read Receipt Logic
+  useEffect(() => {
+    if (!messagesEndRef.current || !selectedConversation) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          // User has scrolled to the bottom (latest messages are visible)
+          // We can now safely mark the conversation as read
+          if (messages.length > 0) {
+            const lastMsg = messages[messages.length - 1];
+            if (lastMsg.senderId !== session.user.id && lastMsg.status !== 'read') {
+              markAsRead(selectedConversation._id, messages);
+            }
+          }
+        }
+      },
+      { threshold: 0.5 } // Trigger when 50% visible (or closer)
+    );
+
+    observer.observe(messagesEndRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [messages, selectedConversation]);
+
+  const scrollToBottom = (behavior = "auto") => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: "end" });
+      setNewMessagesBelow(0);
+    }
+  };
+
+  const isUserAtBottom = () => {
+    if (!scrollViewportRef.current) return true; // Default safely
+    const { scrollTop, scrollHeight, clientHeight } = scrollViewportRef.current;
+
+    // Threshold ~300px (3-4 messages)
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 300;
+
+    // Sync state
+    setShowScrollBottom(!isAtBottom);
+    if (isAtBottom) {
+      setNewMessagesBelow(0);
+    }
+    return isAtBottom;
+  };
+
+  const handleScroll = () => {
+    if (!scrollViewportRef.current) return;
+
+    const { scrollTop } = scrollViewportRef.current;
+
+    // Logic 1: Load more messages (Upper Infinite Scroll)
+    if (scrollTop < 50 && hasMore && !isLoadingMore && messages.length > 0) {
+      loadMessages(selectedConversation._id, true);
+    }
+
+    // Logic 2: Check Bottom Visibility (triggers Button & Badge Reset)
+    isUserAtBottom();
+  };
+
+  const markAsRead = async (conversationId, messages) => {
+    // 1. Identify unread messages from OTHERS
+    const unreadMessages = messages.filter(
+      (m) => m.senderId !== session.user.id && m.status !== "read"
+    );
+
+    if (unreadMessages.length === 0) return;
+
+    console.log(`👀 Marking ${unreadMessages.length} messages as read`);
+
+    // 2. Optimistic UI Update (Safety Net)
+    // We don't wait for API to update local unread counts in sidebar
+    setConversations((prev) =>
+      prev.map((c) =>
+        c._id === conversationId ? { ...c, unreadCount: 0, hasUnread: false } : c
+      )
+    );
+
+    try {
+      // 3. API Call
+      const res = await fetch(`/api/conversations/${conversationId}/read`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      console.log("✅ API Mark Read Success:", data);
+
+      // 4. Socket Emission (Crucial for Sender Blue Ticks)
+      if (socket && socket.connected) {
+        socket.emit("messages:mark-read", {
+          messageIds: unreadMessages.map((m) => m._id),
+          conversationId,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to mark read:", error);
     }
   };
 
@@ -930,35 +1123,45 @@ export default function ChatLayout({ session }) {
           setMessages(data.messages);
           setHasMore(data.hasMore);
           // Scroll to bottom for initial load
-          setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-          }, 100);
+          setTimeout(() => scrollToBottom("auto"), 100);
+
+          // Note: We REMOVED the direct markAsRead() call here.
+          // Because scrollToBottom() will bring the endRef into view,
+          // triggering the IntersectionObserver, which will then call markAsRead().
+          // This ensures "Visibility-Based" reading.
         }
 
-        // Mark unread as read logic (simplified)
-        const unreadMessages = data.messages.filter(
-          (m) => m.senderId !== session.user.id && m.status !== "read"
-        );
+        // Mark conversation as read (Updates Cursor & Syncs Receipts)
+        // if (data.messages.length > 0 && !isLoadMore) {
+        //   fetch(`/api/conversations/${conversationId}/read`, { method: "POST" })
+        //     .then(res => res.json())
+        //     .then(data => {
+        //       console.log("✅ Marked conversation as read:", data);
+        //       // Update local unread count immediately for UI responsiveness
+        //       setConversations(prev => prev.map(c =>
+        //         c._id === conversationId ? { ...c, unreadCount: 0, hasUnread: false } : c
+        //       ));
 
-        if (unreadMessages.length > 0) {
-          if (socket && socket.connected) {
-            socket.emit("messages:mark-read", {
-              messageIds: unreadMessages.map((m) => m._id),
-              conversationId,
-            });
-          }
+        //       // NOTIFY SERVER via Socket so Sender sees Blue Ticks
+        //       if (socket && socket.connected) {
+        //         // Filter for messages that genuinely need a read receipt sent
+        //         // (Messages not from me, and not already marked read in the UI data)
+        //         const unreadMsgIds = data.messages
+        //           ? data.messages
+        //             .filter(m => m.senderId !== session.user.id && m.status !== 'read')
+        //             .map(m => m._id)
+        //           : [];
 
-          // In background
-          Promise.all(
-            unreadMessages.map((msg) =>
-              fetch("/api/messages/status", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ messageId: msg._id, status: "read" }),
-              })
-            )
-          ).catch(console.error);
-        }
+        //         if (unreadMsgIds.length > 0) {
+        //           socket.emit("messages:mark-read", {
+        //             messageIds: unreadMsgIds,
+        //             conversationId,
+        //           });
+        //         }
+        //       }
+        //     })
+        //     .catch(err => console.error("Failed to mark read:", err));
+        // }
       }
     } catch (error) {
       console.error("Error loading messages:", error);
@@ -1048,7 +1251,13 @@ export default function ChatLayout({ session }) {
   };
 
   const handleNewConversation = (conversation) => {
-    setConversations((prev) => [conversation, ...prev]);
+    // FIX: Check if conversation already exists in the list
+    const exists = conversations.some((c) => c._id === conversation._id);
+
+    if (!exists) {
+      setConversations((prev) => [conversation, ...prev]);
+    }
+
     setSelectedConversation(conversation);
     setIsNewChatOpen(false);
   };
@@ -1108,7 +1317,7 @@ export default function ChatLayout({ session }) {
       return;
     }
 
-    const otherParticipant = getOtherParticipant(selectedConversation);
+    const otherParticipant = getOtherParticipant(selectedConversation, session.user.id);
 
     try {
       const response = await fetch("/api/calls", {
@@ -1138,9 +1347,12 @@ export default function ChatLayout({ session }) {
   const getMessageStatusIcon = (message) => {
     if (message.senderId !== session.user.id) return null;
 
-    if (message.status === "read") {
+    // Check explicit status OR if readBy has people (Sender is always in readBy, so > 1 means someone else read it)
+    const isRead = message.status === "read" || (message.readBy && message.readBy.length > 1);
+
+    if (isRead) {
       return <CheckCheck className="w-4 h-4 text-blue-500" />;
-    } else if (message.status === "delivered") {
+    } else if (message.status === "delivered" || (message.deliveredTo && message.deliveredTo.length > 1)) {
       return <CheckCheck className="w-4 h-4 text-gray-400" />;
     } else {
       return <Check className="w-4 h-4 text-gray-400" />;
@@ -1348,10 +1560,10 @@ export default function ChatLayout({ session }) {
           prevConversations.map((conv) =>
             conv._id === selectedConversation._id
               ? {
-                  ...conv,
-                  lastMessage: data.newLastMessage,
-                  updatedAt: new Date().toISOString(),
-                }
+                ...conv,
+                lastMessage: data.newLastMessage,
+                updatedAt: new Date().toISOString(),
+              }
               : conv
           )
         );
@@ -1403,9 +1615,8 @@ export default function ChatLayout({ session }) {
       </div>
 
       <div
-        className={`${
-          showMobileChat ? "hidden" : "flex"
-        } md:hidden w-full flex-col`}
+        className={`${showMobileChat ? "hidden" : "flex"
+          } md:hidden w-full flex-col`}
       >
         <SidebarContent
           sessionUser={session.user}
@@ -1429,9 +1640,8 @@ export default function ChatLayout({ session }) {
       </div>
 
       <div
-        className={`${
-          !showMobileChat ? "hidden md:flex" : "flex"
-        } flex-1 flex-col`}
+        className={`${!showMobileChat ? "hidden md:flex" : "flex"
+          } flex-1 flex-col relative`}
       >
         {selectedConversation ? (
           <>
@@ -1450,35 +1660,49 @@ export default function ChatLayout({ session }) {
                     src={
                       selectedConversation.type === "group"
                         ? selectedConversation.avatar
-                        : getOtherParticipant(selectedConversation)?.avatar
+                        : getOtherParticipant(selectedConversation, session.user.id)?.avatar
                     }
                   />
                   <AvatarFallback>
                     {selectedConversation.type === "group"
                       ? selectedConversation.name?.[0]
-                      : getOtherParticipant(selectedConversation)?.name?.[0]}
+                      : getOtherParticipant(selectedConversation, session.user.id)?.name?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <h2 className="font-semibold flex items-center gap-2 text-sm sm:text-base truncate">
                     {selectedConversation.type === "group"
                       ? selectedConversation.name
-                      : getOtherParticipant(selectedConversation)?.name}
+                      : getOtherParticipant(selectedConversation, session.user.id)?.name}
                     {selectedConversation.type === "group" && (
                       <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     )}
                   </h2>
                   <p className="text-xs text-muted-foreground truncate">
                     {selectedConversation.type === "group"
-                      ? `${
-                          selectedConversation.participants?.length || 0
-                        } members`
-                      : isTyping
-                      ? "typing..."
-                      : formatLastSeen(
-                          getOtherParticipant(selectedConversation)?._id
+                      ? `${selectedConversation.participantDetails?.length || selectedConversation.participants?.length || 0
+                      } members`
+                      : typingUsers.size > 0
+                        ? "typing..."
+                        : formatLastSeen(
+                          getOtherParticipant(selectedConversation, session.user.id)?._id
                         )}
                   </p>
+                  {/* Enhanced Typing Indicator for Groups */}
+                  {selectedConversation.type === 'group' && typingUsers.size > 0 && (
+                    <p className="text-xs text-primary animate-pulse">
+                      {(() => {
+                        const writers = Array.from(typingUsers).map(id => {
+                          const member = selectedConversation.participantDetails?.find(p => p._id === id);
+                          return member ? member.name.split(' ')[0] : 'Someone';
+                        });
+                        if (writers.length === 1) return `${writers[0]} is typing...`;
+                        if (writers.length === 2) return `${writers.join(' and ')} are typing...`;
+                        if (writers.length === 3) return `${writers[0]}, ${writers[1]} and ${writers[2]} are typing...`;
+                        return `${writers.slice(0, 2).join(', ')} and ${writers.length - 2} others are typing...`;
+                      })()}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex gap-1 flex-shrink-0">
@@ -1502,9 +1726,38 @@ export default function ChatLayout({ session }) {
                     </Button>
                   </>
                 )}
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <MoreVertical className="w-5 h-5" />
-                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                      <MoreVertical className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {selectedConversation.type === "group" && (
+                      <>
+                        <DropdownMenuItem onClick={() => setIsGroupInfoOpen(true)}>
+                          <Users className="w-4 h-4 mr-2" />
+                          Group Info
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/50"
+                          onClick={() => setIsLeaveGroupAlertOpen(true)}
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Leave Group
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    {selectedConversation.type === "direct" && (
+                      <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+                        <Settings className="w-4 h-4 mr-2" />
+                        Settings
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -1530,17 +1783,15 @@ export default function ChatLayout({ session }) {
                   <div
                     key={message._id}
                     id={`msg-${message._id}`}
-                    className={`flex mb-3 sm:mb-4 ${
-                      isOwn ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex mb-3 sm:mb-4 ${isOwn ? "justify-end" : "justify-start"
+                      }`}
                   >
                     <div className="flex flex-col max-w-[85%] sm:max-w-[70%]">
                       <div
-                        className={`rounded-lg px-3 sm:px-4 py-2 cursor-pointer select-none ${
-                          isOwn
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-card"
-                        }`}
+                        className={`rounded-lg px-3 sm:px-4 py-2 cursor-pointer select-none ${isOwn
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-card"
+                          }`}
                         onContextMenu={(e) => handleContextMenu(e, message)}
                         onTouchStart={(e) => handleLongPressStart(e, message)}
                         onTouchEnd={handleLongPressEnd}
@@ -1570,7 +1821,7 @@ export default function ChatLayout({ session }) {
                           >
                             <p className="text-xs font-semibold opacity-80 mb-1">
                               {message.replyToMessage.senderId ===
-                              session.user.id
+                                session.user.id
                                 ? "You"
                                 : "Reply"}
                             </p>
@@ -1684,11 +1935,10 @@ export default function ChatLayout({ session }) {
                                 onClick={() =>
                                   handleReaction(message._id, reaction.emoji)
                                 }
-                                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors ${
-                                  hasUserReacted
-                                    ? "bg-primary/20 border border-primary"
-                                    : "bg-accent hover:bg-accent/80"
-                                }`}
+                                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors ${hasUserReacted
+                                  ? "bg-primary/20 border border-primary"
+                                  : "bg-accent hover:bg-accent/80"
+                                  }`}
                                 title={reaction.users
                                   .map((u) => u.userName)
                                   .join(", ")}
@@ -1707,53 +1957,65 @@ export default function ChatLayout({ session }) {
                 );
               })}
               <div ref={messagesEndRef} />
+            </div>
 
-              {showScrollBottom && (
+            {/* FIXED FLOATING BUTTON */}
+            {showScrollBottom && (
+              <div className="absolute bottom-24 right-6 z-50">
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="absolute bottom-20 right-4 rounded-full shadow-lg z-10 animate-in fade-in zoom-in duration-200"
-                  onClick={() =>
-                    messagesEndRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                    })
-                  }
+                  className="rounded-full shadow-lg animate-in fade-in zoom-in duration-200 relative bg-background/90 backdrop-blur border border-border"
+                  onClick={() => scrollToBottom("smooth")}
                 >
                   <ArrowDown className="w-5 h-5" />
-                  {/* Optional: Add unread count badge here if new messages arrive while scrolled up */}
-                </Button>
-              )}
-            </div>
-
-            <form
-              onSubmit={handleSendMessage}
-              className="bg-card p-3 sm:p-4 border-t border-border"
-            >
-              {replyingTo && (
-                <ReplyPreview replyTo={replyingTo} onCancel={cancelReply} />
-              )}
-              <div className="flex gap-2">
-                <MediaUpload
-                  onMediaUploaded={handleMediaUploaded}
-                  conversationId={selectedConversation?._id}
-                  disabled={!selectedConversation}
-                />
-                <Input
-                  placeholder="Type a message..."
-                  value={messageInput}
-                  onChange={handleTyping}
-                  className="flex-1 text-sm sm:text-base"
-                />
-                <Button
-                  type="submit"
-                  size="icon"
-                  className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0"
-                  disabled={!messageInput.trim()}
-                >
-                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                  {newMessagesBelow > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full shadow-sm animate-bounce">
+                      {newMessagesBelow}
+                    </span>
+                  )}
                 </Button>
               </div>
-            </form>
+            )}
+
+            {selectedConversation.type === "group" &&
+              selectedConversation.settings?.sendMessages === "admins" &&
+              !(selectedConversation.admins?.includes(session.user.id) || selectedConversation.admin === session.user.id) ? (
+              <div className="bg-muted p-4 text-center text-sm text-muted-foreground border-t border-border">
+                Only admins can send messages in this group
+              </div>
+            ) : (
+              <form
+                onSubmit={handleSendMessage}
+                className="bg-card p-3 sm:p-4 border-t border-border"
+              >
+                {replyingTo && (
+                  <ReplyPreview replyTo={replyingTo} onCancel={cancelReply} />
+                )}
+                <div className="flex gap-2">
+                  <MediaUpload
+                    onMediaUploaded={handleMediaUploaded}
+                    conversationId={selectedConversation?._id}
+                    disabled={!selectedConversation}
+                  />
+                  <Input
+                    ref={messageInputRef}
+                    placeholder="Type a message..."
+                    value={messageInput}
+                    onChange={handleTyping}
+                    className="flex-1 text-sm sm:text-base"
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0"
+                    disabled={!messageInput.trim()}
+                  >
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </Button>
+                </div>
+              </form>
+            )}
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-muted/20 p-4">
@@ -1777,6 +2039,11 @@ export default function ChatLayout({ session }) {
         onClose={() => setIsNewChatOpen(false)}
         onConversationCreated={handleNewConversation}
         currentUserId={session.user.id}
+        existingParticipantIds={conversations
+          .filter(c => c.type === 'direct')
+          .flatMap(c => c.participants)
+          .filter(id => id !== session.user.id)
+        }
       />
 
       <CreateGroupDialog
@@ -1813,6 +2080,40 @@ export default function ChatLayout({ session }) {
         isDeleting={isDeleting}
       />
 
+      {/* Group Info Dialog */}
+      <GroupInfoDialog
+        isOpen={isGroupInfoOpen}
+        onClose={() => setIsGroupInfoOpen(false)}
+        conversation={selectedConversation}
+        currentUserId={session.user.id}
+        onUpdateGroup={(updatedGroup) => {
+          setConversations(prev => prev.map(c => c._id === updatedGroup._id ? updatedGroup : c));
+          setSelectedConversation(updatedGroup);
+        }}
+        onLeaveGroup={handleLeaveGroup}
+      />
+
+      {/* Leave Group Alert */}
+      <AlertDialog open={isLeaveGroupAlertOpen} onOpenChange={setIsLeaveGroupAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave Group?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to leave "{selectedConversation?.name}"? You will no longer be able to send or receive messages in this group.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLeaveGroup}
+              className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
+            >
+              Leave Group
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {activeCall && (
         <CallModal
           isOpen={isCallModalOpen}
@@ -1833,6 +2134,11 @@ export default function ChatLayout({ session }) {
           onClose={closeContextMenu}
           onReaction={(emoji) => handleReaction(contextMenu.message._id, emoji)}
           onReply={() => handleReplyToMessage(contextMenu.message)}
+          onInfo={selectedConversation.type === 'group' ? () => {
+            setSelectedMessageForInfo(contextMenu.message);
+            setIsMessageInfoOpen(true);
+            closeContextMenu();
+          } : undefined}
           onEdit={() => handleEditMessage(contextMenu.message)}
           onDelete={() => handleDeleteMessage(contextMenu.message)}
           isOwnMessage={contextMenu.isOwnMessage}
@@ -1840,6 +2146,15 @@ export default function ChatLayout({ session }) {
           currentUserId={session.user.id}
         />
       )}
+      <MessageInfoDialog
+        isOpen={isMessageInfoOpen}
+        onClose={() => {
+          setIsMessageInfoOpen(false);
+          setSelectedMessageForInfo(null);
+        }}
+        message={selectedMessageForInfo}
+        participantDetails={selectedConversation?.participantDetails}
+      />
     </div>
   );
 }

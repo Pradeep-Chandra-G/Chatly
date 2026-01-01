@@ -131,6 +131,17 @@ export async function POST(request) {
       );
     }
 
+    // Permission Check: Send Messages
+    if (conversation.type === 'group' && conversation.settings?.sendMessages === 'admins') {
+      const admins = conversation.admins || [conversation.admin];
+      if (!admins.includes(session.user.id)) {
+        return NextResponse.json(
+          { error: "Only admins can send messages in this group" },
+          { status: 403 }
+        );
+      }
+    }
+
     // If this is a reply, fetch the original message
     let replyToMessage = null;
     if (replyTo) {
@@ -160,17 +171,19 @@ export async function POST(request) {
       fileSize,
       status: "sent",
       createdAt: new Date(),
+      readBy: [{ userId: session.user.id, at: new Date() }], // Detailed read receipt
+      deliveredTo: [{ userId: session.user.id, at: new Date() }], // Detailed delivery receipt
       // Reply information
       replyTo: replyTo || null,
       replyToMessage: replyToMessage
         ? {
-            _id: replyToMessage._id,
-            content: replyToMessage.content,
-            type: replyToMessage.type,
-            senderId: replyToMessage.senderId,
-            mediaUrl: replyToMessage.mediaUrl,
-            fileName: replyToMessage.fileName,
-          }
+          _id: replyToMessage._id,
+          content: replyToMessage.content,
+          type: replyToMessage.type,
+          senderId: replyToMessage.senderId,
+          mediaUrl: replyToMessage.mediaUrl,
+          fileName: replyToMessage.fileName,
+        }
         : null,
     };
 

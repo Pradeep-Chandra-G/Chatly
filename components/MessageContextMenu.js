@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Reply, Edit, Trash2 } from "lucide-react";
+import { Reply, Edit, Trash2, Info } from "lucide-react";
 
 const COMMON_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "😡", "🎉", "🔥"];
 
@@ -14,6 +14,7 @@ export default function MessageContextMenu({
   onReply,
   onEdit,
   onDelete,
+  onInfo, // New prop
   isOwnMessage,
   existingReactions = [],
   currentUserId,
@@ -103,9 +104,8 @@ export default function MessageContextMenu({
                 onReaction(emoji);
                 onClose();
               }}
-              className={`text-xl sm:text-2xl hover:scale-125 transition-transform p-1 rounded ${
-                getUserReaction(emoji) ? "bg-accent" : ""
-              }`}
+              className={`text-xl sm:text-2xl hover:scale-125 transition-transform p-1 rounded ${getUserReaction(emoji) ? "bg-accent" : ""
+                }`}
               title={`React with ${emoji}`}
             >
               {emoji}
@@ -125,6 +125,19 @@ export default function MessageContextMenu({
             <Reply className="w-4 h-4" />
             Reply
           </button>
+
+          {onInfo && (
+            <button
+              onClick={() => {
+                onInfo();
+                onClose();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded transition-colors"
+            >
+              <Info className="w-4 h-4" />
+              Message Info
+            </button>
+          )}
 
           {isOwnMessage && (
             <>

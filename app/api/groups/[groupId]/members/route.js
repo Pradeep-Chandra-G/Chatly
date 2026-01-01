@@ -65,7 +65,7 @@ export async function POST(request, { params }) {
     // Add member
     await db.collection('conversations').updateOne(
       { _id: groupId },
-      { 
+      {
         $addToSet: { participants: memberId },
         $set: { updatedAt: new Date() }
       }
@@ -112,10 +112,13 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Check if user is admin
-    if (group.admin !== session.user.id) {
+    // Check permissions: Admin can remove anyone, User can remove themselves (leave)
+    const isSelfRemoval = memberId === session.user.id;
+    const isAdmin = group.admin === session.user.id;
+
+    if (!isAdmin && !isSelfRemoval) {
       return NextResponse.json(
-        { error: 'Only admin can remove members' },
+        { error: 'Only admin can remove other members' },
         { status: 403 }
       );
     }
@@ -123,7 +126,7 @@ export async function DELETE(request, { params }) {
     // Remove member
     await db.collection('conversations').updateOne(
       { _id: groupId },
-      { 
+      {
         $pull: { participants: memberId },
         $set: { updatedAt: new Date() }
       }

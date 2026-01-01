@@ -43,7 +43,7 @@ export async function POST(request) {
 
     const db = await getDb();
     const callId = uuidv4();
-    
+
     const newCall = {
       _id: callId,
       callerId: session.user.id,
@@ -83,8 +83,19 @@ export async function PATCH(request) {
     }
 
     const db = await getDb();
+
+    // Verify ownership
+    const call = await db.collection('calls').findOne({ _id: callId });
+    if (!call) {
+      return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+    }
+
+    if (call.callerId !== session.user.id && call.receiverId !== session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized to modify this call' }, { status: 403 });
+    }
+
     const updateData = { status };
-    
+
     if (status === 'ended' || status === 'rejected') {
       updateData.endedAt = new Date();
     }

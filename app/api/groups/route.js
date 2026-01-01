@@ -45,15 +45,22 @@ export async function POST(request) {
 
     // Create group conversation
     const groupId = uuidv4();
-    const allMembers = [session.user.id, ...members];
-    
+    const allMembers = Array.from(new Set([session.user.id, ...members]));
+
     const newGroup = {
       _id: groupId,
       type: 'group',
       name,
       avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${name}`,
       participants: allMembers,
-      admin: session.user.id,
+      admin: session.user.id, // Legacy support
+      admins: [session.user.id], // Multiple admins support
+      description: "",
+      settings: {
+        sendMessages: "everyone",
+        editInfo: "everyone",
+        addMembers: "everyone"
+      },
       createdAt: new Date(),
       updatedAt: new Date()
     };
