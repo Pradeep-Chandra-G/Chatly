@@ -88,7 +88,9 @@ let pingInterval;
 const getOtherParticipant = (conversation, currentUserId) => {
   if (!conversation?.participantDetails) return null;
 
-  const other = conversation.participantDetails.find(p => String(p._id) !== String(currentUserId));
+  const other = conversation.participantDetails.find(
+    (p) => String(p._id) !== String(currentUserId)
+  );
 
   if (!other) {
     return conversation.participantDetails[0];
@@ -192,10 +194,14 @@ const SidebarContent = memo(
           case "nameAsc":
             filtered.sort((a, b) => {
               const nameA = (
-                a.type === "group" ? a.name : getOtherParticipant(a, sessionUser.id)?.name || ""
+                a.type === "group"
+                  ? a.name
+                  : getOtherParticipant(a, sessionUser.id)?.name || ""
               ).toLowerCase();
               const nameB = (
-                b.type === "group" ? b.name : getOtherParticipant(b, sessionUser.id)?.name || ""
+                b.type === "group"
+                  ? b.name
+                  : getOtherParticipant(b, sessionUser.id)?.name || ""
               ).toLowerCase();
               return nameA.localeCompare(nameB);
             });
@@ -203,10 +209,14 @@ const SidebarContent = memo(
           case "nameDesc":
             filtered.sort((a, b) => {
               const nameA = (
-                a.type === "group" ? a.name : getOtherParticipant(a, sessionUser.id)?.name || ""
+                a.type === "group"
+                  ? a.name
+                  : getOtherParticipant(a, sessionUser.id)?.name || ""
               ).toLowerCase();
               const nameB = (
-                b.type === "group" ? b.name : getOtherParticipant(b, sessionUser.id)?.name || ""
+                b.type === "group"
+                  ? b.name
+                  : getOtherParticipant(b, sessionUser.id)?.name || ""
               ).toLowerCase();
               return nameB.localeCompare(nameA);
             });
@@ -357,8 +367,9 @@ const SidebarContent = memo(
               return (
                 <div
                   key={conv._id}
-                  className={`p-3 sm:p-4 hover:bg-accent cursor-pointer transition-colors relative ${isSelected ? "bg-accent border-l-4 border-primary" : ""
-                    }`}
+                  className={`p-3 sm:p-4 hover:bg-accent cursor-pointer transition-colors relative ${
+                    isSelected ? "bg-accent border-l-4 border-primary" : ""
+                  }`}
                   onClick={() => onSelectConversation(conv)}
                 >
                   <div className="flex items-center gap-3">
@@ -384,8 +395,9 @@ const SidebarContent = memo(
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <h3
-                            className={`font-semibold truncate text-sm sm:text-base ${hasUnread ? "text-foreground" : ""
-                              }`}
+                            className={`font-semibold truncate text-sm sm:text-base ${
+                              hasUnread ? "text-foreground" : ""
+                            }`}
                           >
                             {conv.type === "group" ? conv.name : other?.name}
                           </h3>
@@ -413,10 +425,11 @@ const SidebarContent = memo(
                       </div>
 
                       <p
-                        className={`text-sm truncate ${hasUnread
-                          ? "text-foreground font-medium"
-                          : "text-muted-foreground"
-                          }`}
+                        className={`text-sm truncate ${
+                          hasUnread
+                            ? "text-foreground font-medium"
+                            : "text-muted-foreground"
+                        }`}
                       >
                         {conv.lastMessage || "No messages yet"}
                       </p>
@@ -475,7 +488,9 @@ export default function ChatLayout({ session }) {
   // Sync selectedConversation with conversations state
   useEffect(() => {
     if (selectedConversation) {
-      const updated = conversations.find((c) => c._id === selectedConversation._id);
+      const updated = conversations.find(
+        (c) => c._id === selectedConversation._id
+      );
       if (updated && updated !== selectedConversation) {
         setSelectedConversation(updated);
       }
@@ -707,6 +722,19 @@ export default function ChatLayout({ session }) {
       });
     });
 
+    socket.on("conversation:unread-updated", ({ conversationId, userId }) => {
+      if (userId !== session.user.id) {
+        // Someone else read my messages
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv._id === conversationId
+              ? { ...conv, unreadCount: 0, hasUnread: false }
+              : conv
+          )
+        );
+      }
+    });
+
     socket.on("message:new", (message) => {
       console.log("📨 New message received:", message);
 
@@ -720,7 +748,9 @@ export default function ChatLayout({ session }) {
 
       // Handling New Conversations (Real-time DM creation)
       // Check if we already have this conversation in our list
-      const knowsConversation = conversations.some(c => c._id === message.conversationId);
+      const knowsConversation = conversations.some(
+        (c) => c._id === message.conversationId
+      );
 
       if (!knowsConversation) {
         console.log("🆕 New conversation detected! Fetching...");
@@ -735,7 +765,10 @@ export default function ChatLayout({ session }) {
       }
 
       // Mark as Read logic (Visibility Based)
-      if (selectedConversationRef.current && selectedConversationRef.current._id === message.conversationId) {
+      if (
+        selectedConversationRef.current &&
+        selectedConversationRef.current._id === message.conversationId
+      ) {
         if (message.senderId !== session.user.id) {
           // Check if user is effectively viewing the bottom
           // We use the helper defined below (hoisting works for functions but better to be safe)
@@ -748,7 +781,10 @@ export default function ChatLayout({ session }) {
 
           let isAtBottom = true;
           if (viewport) {
-            const diff = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+            const diff =
+              viewport.scrollHeight -
+              viewport.scrollTop -
+              viewport.clientHeight;
             isAtBottom = diff < 300;
           }
 
@@ -757,7 +793,7 @@ export default function ChatLayout({ session }) {
             setTimeout(() => scrollToBottom("smooth"), 100);
           } else {
             setShowScrollBottom(true);
-            setNewMessagesBelow(prev => prev + 1);
+            setNewMessagesBelow((prev) => prev + 1);
           }
         }
       }
@@ -837,10 +873,10 @@ export default function ChatLayout({ session }) {
           prevConversations.map((conv) =>
             conv._id === conversationId
               ? {
-                ...conv,
-                lastMessage: newLastMessage,
-                updatedAt: new Date().toISOString(),
-              }
+                  ...conv,
+                  lastMessage: newLastMessage,
+                  updatedAt: new Date().toISOString(),
+                }
               : conv
           )
         );
@@ -849,7 +885,7 @@ export default function ChatLayout({ session }) {
 
     socket.on("user:typing", ({ userId, conversationId }) => {
       if (conversationId === selectedConversationRef.current?._id) {
-        setTypingUsers(prev => {
+        setTypingUsers((prev) => {
           const newSet = new Set(prev);
           newSet.add(userId);
           return newSet;
@@ -859,7 +895,7 @@ export default function ChatLayout({ session }) {
 
     socket.on("user:stop-typing", ({ userId, conversationId }) => {
       if (conversationId === selectedConversationRef.current?._id) {
-        setTypingUsers(prev => {
+        setTypingUsers((prev) => {
           const newSet = new Set(prev);
           newSet.delete(userId);
           return newSet;
@@ -999,7 +1035,10 @@ export default function ChatLayout({ session }) {
           // We can now safely mark the conversation as read
           if (messages.length > 0) {
             const lastMsg = messages[messages.length - 1];
-            if (lastMsg.senderId !== session.user.id && lastMsg.status !== 'read') {
+            if (
+              lastMsg.senderId !== session.user.id &&
+              lastMsg.status !== "read"
+            ) {
               // Prevent duplicate calls for the same message loop
               if (lastReadMessageIdRef.current !== lastMsg._id) {
                 lastReadMessageIdRef.current = lastMsg._id;
@@ -1069,7 +1108,9 @@ export default function ChatLayout({ session }) {
     // We don't wait for API to update local unread counts in sidebar
     setConversations((prev) =>
       prev.map((c) =>
-        c._id === conversationId ? { ...c, unreadCount: 0, hasUnread: false } : c
+        c._id === conversationId
+          ? { ...c, unreadCount: 0, hasUnread: false }
+          : c
       )
     );
 
@@ -1323,7 +1364,10 @@ export default function ChatLayout({ session }) {
       return;
     }
 
-    const otherParticipant = getOtherParticipant(selectedConversation, session.user.id);
+    const otherParticipant = getOtherParticipant(
+      selectedConversation,
+      session.user.id
+    );
 
     try {
       const response = await fetch("/api/calls", {
@@ -1354,11 +1398,16 @@ export default function ChatLayout({ session }) {
     if (message.senderId !== session.user.id) return null;
 
     // Check explicit status OR if readBy has people (Sender is always in readBy, so > 1 means someone else read it)
-    const isRead = message.status === "read" || (message.readBy && message.readBy.length > 1);
+    const isRead =
+      message.status === "read" ||
+      (message.readBy && message.readBy.length > 1);
 
     if (isRead) {
       return <CheckCheck className="w-4 h-4 text-blue-500" />;
-    } else if (message.status === "delivered" || (message.deliveredTo && message.deliveredTo.length > 1)) {
+    } else if (
+      message.status === "delivered" ||
+      (message.deliveredTo && message.deliveredTo.length > 1)
+    ) {
       return <CheckCheck className="w-4 h-4 text-gray-400" />;
     } else {
       return <Check className="w-4 h-4 text-gray-400" />;
@@ -1566,10 +1615,10 @@ export default function ChatLayout({ session }) {
           prevConversations.map((conv) =>
             conv._id === selectedConversation._id
               ? {
-                ...conv,
-                lastMessage: data.newLastMessage,
-                updatedAt: new Date().toISOString(),
-              }
+                  ...conv,
+                  lastMessage: data.newLastMessage,
+                  updatedAt: new Date().toISOString(),
+                }
               : conv
           )
         );
@@ -1621,8 +1670,9 @@ export default function ChatLayout({ session }) {
       </div>
 
       <div
-        className={`${showMobileChat ? "hidden" : "flex"
-          } md:hidden w-full flex-col`}
+        className={`${
+          showMobileChat ? "hidden" : "flex"
+        } md:hidden w-full flex-col`}
       >
         <SidebarContent
           sessionUser={session.user}
@@ -1646,8 +1696,9 @@ export default function ChatLayout({ session }) {
       </div>
 
       <div
-        className={`${!showMobileChat ? "hidden md:flex" : "flex"
-          } flex-1 flex-col relative`}
+        className={`${
+          !showMobileChat ? "hidden md:flex" : "flex"
+        } flex-1 flex-col relative`}
       >
         {selectedConversation ? (
           <>
@@ -1666,49 +1717,75 @@ export default function ChatLayout({ session }) {
                     src={
                       selectedConversation.type === "group"
                         ? selectedConversation.avatar
-                        : getOtherParticipant(selectedConversation, session.user.id)?.avatar
+                        : getOtherParticipant(
+                            selectedConversation,
+                            session.user.id
+                          )?.avatar
                     }
                   />
                   <AvatarFallback>
                     {selectedConversation.type === "group"
                       ? selectedConversation.name?.[0]
-                      : getOtherParticipant(selectedConversation, session.user.id)?.name?.[0]}
+                      : getOtherParticipant(
+                          selectedConversation,
+                          session.user.id
+                        )?.name?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <h2 className="font-semibold flex items-center gap-2 text-sm sm:text-base truncate">
                     {selectedConversation.type === "group"
                       ? selectedConversation.name
-                      : getOtherParticipant(selectedConversation, session.user.id)?.name}
+                      : getOtherParticipant(
+                          selectedConversation,
+                          session.user.id
+                        )?.name}
                     {selectedConversation.type === "group" && (
                       <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     )}
                   </h2>
                   <p className="text-xs text-muted-foreground truncate">
                     {selectedConversation.type === "group"
-                      ? `${selectedConversation.participantDetails?.length || selectedConversation.participants?.length || 0
-                      } members`
+                      ? `${
+                          selectedConversation.participantDetails?.length ||
+                          selectedConversation.participants?.length ||
+                          0
+                        } members`
                       : typingUsers.size > 0
-                        ? "typing..."
-                        : formatLastSeen(
-                          getOtherParticipant(selectedConversation, session.user.id)?._id
+                      ? "typing..."
+                      : formatLastSeen(
+                          getOtherParticipant(
+                            selectedConversation,
+                            session.user.id
+                          )?._id
                         )}
                   </p>
                   {/* Enhanced Typing Indicator for Groups */}
-                  {selectedConversation.type === 'group' && typingUsers.size > 0 && (
-                    <p className="text-xs text-primary animate-pulse">
-                      {(() => {
-                        const writers = Array.from(typingUsers).map(id => {
-                          const member = selectedConversation.participantDetails?.find(p => p._id === id);
-                          return member ? member.name.split(' ')[0] : 'Someone';
-                        });
-                        if (writers.length === 1) return `${writers[0]} is typing...`;
-                        if (writers.length === 2) return `${writers.join(' and ')} are typing...`;
-                        if (writers.length === 3) return `${writers[0]}, ${writers[1]} and ${writers[2]} are typing...`;
-                        return `${writers.slice(0, 2).join(', ')} and ${writers.length - 2} others are typing...`;
-                      })()}
-                    </p>
-                  )}
+                  {selectedConversation.type === "group" &&
+                    typingUsers.size > 0 && (
+                      <p className="text-xs text-primary animate-pulse">
+                        {(() => {
+                          const writers = Array.from(typingUsers).map((id) => {
+                            const member =
+                              selectedConversation.participantDetails?.find(
+                                (p) => p._id === id
+                              );
+                            return member
+                              ? member.name.split(" ")[0]
+                              : "Someone";
+                          });
+                          if (writers.length === 1)
+                            return `${writers[0]} is typing...`;
+                          if (writers.length === 2)
+                            return `${writers.join(" and ")} are typing...`;
+                          if (writers.length === 3)
+                            return `${writers[0]}, ${writers[1]} and ${writers[2]} are typing...`;
+                          return `${writers.slice(0, 2).join(", ")} and ${
+                            writers.length - 2
+                          } others are typing...`;
+                        })()}
+                      </p>
+                    )}
                 </div>
               </div>
               <div className="flex gap-1 flex-shrink-0">
@@ -1742,7 +1819,9 @@ export default function ChatLayout({ session }) {
                   <DropdownMenuContent align="end">
                     {selectedConversation.type === "group" && (
                       <>
-                        <DropdownMenuItem onClick={() => setIsGroupInfoOpen(true)}>
+                        <DropdownMenuItem
+                          onClick={() => setIsGroupInfoOpen(true)}
+                        >
                           <Users className="w-4 h-4 mr-2" />
                           Group Info
                         </DropdownMenuItem>
@@ -1789,15 +1868,17 @@ export default function ChatLayout({ session }) {
                   <div
                     key={message._id}
                     id={`msg-${message._id}`}
-                    className={`flex mb-3 sm:mb-4 ${isOwn ? "justify-end" : "justify-start"
-                      }`}
+                    className={`flex mb-3 sm:mb-4 ${
+                      isOwn ? "justify-end" : "justify-start"
+                    }`}
                   >
                     <div className="flex flex-col max-w-[85%] sm:max-w-[70%]">
                       <div
-                        className={`rounded-lg px-3 sm:px-4 py-2 cursor-pointer select-none ${isOwn
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-card"
-                          }`}
+                        className={`rounded-lg px-3 sm:px-4 py-2 cursor-pointer select-none ${
+                          isOwn
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-card"
+                        }`}
                         onContextMenu={(e) => handleContextMenu(e, message)}
                         onTouchStart={(e) => handleLongPressStart(e, message)}
                         onTouchEnd={handleLongPressEnd}
@@ -1827,7 +1908,7 @@ export default function ChatLayout({ session }) {
                           >
                             <p className="text-xs font-semibold opacity-80 mb-1">
                               {message.replyToMessage.senderId ===
-                                session.user.id
+                              session.user.id
                                 ? "You"
                                 : "Reply"}
                             </p>
@@ -1941,10 +2022,11 @@ export default function ChatLayout({ session }) {
                                 onClick={() =>
                                   handleReaction(message._id, reaction.emoji)
                                 }
-                                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors ${hasUserReacted
-                                  ? "bg-primary/20 border border-primary"
-                                  : "bg-accent hover:bg-accent/80"
-                                  }`}
+                                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors ${
+                                  hasUserReacted
+                                    ? "bg-primary/20 border border-primary"
+                                    : "bg-accent hover:bg-accent/80"
+                                }`}
                                 title={reaction.users
                                   .map((u) => u.userName)
                                   .join(", ")}
@@ -1985,8 +2067,11 @@ export default function ChatLayout({ session }) {
             )}
 
             {selectedConversation.type === "group" &&
-              selectedConversation.settings?.sendMessages === "admins" &&
-              !(selectedConversation.admins?.includes(session.user.id) || selectedConversation.admin === session.user.id) ? (
+            selectedConversation.settings?.sendMessages === "admins" &&
+            !(
+              selectedConversation.admins?.includes(session.user.id) ||
+              selectedConversation.admin === session.user.id
+            ) ? (
               <div className="bg-muted p-4 text-center text-sm text-muted-foreground border-t border-border">
                 Only admins can send messages in this group
               </div>
@@ -2046,10 +2131,9 @@ export default function ChatLayout({ session }) {
         onConversationCreated={handleNewConversation}
         currentUserId={session.user.id}
         existingParticipantIds={conversations
-          .filter(c => c.type === 'direct')
-          .flatMap(c => c.participants)
-          .filter(id => id !== session.user.id)
-        }
+          .filter((c) => c.type === "direct")
+          .flatMap((c) => c.participants)
+          .filter((id) => id !== session.user.id)}
       />
 
       <CreateGroupDialog
@@ -2093,19 +2177,25 @@ export default function ChatLayout({ session }) {
         conversation={selectedConversation}
         currentUserId={session.user.id}
         onUpdateGroup={(updatedGroup) => {
-          setConversations(prev => prev.map(c => c._id === updatedGroup._id ? updatedGroup : c));
+          setConversations((prev) =>
+            prev.map((c) => (c._id === updatedGroup._id ? updatedGroup : c))
+          );
           setSelectedConversation(updatedGroup);
         }}
         onLeaveGroup={handleLeaveGroup}
       />
 
       {/* Leave Group Alert */}
-      <AlertDialog open={isLeaveGroupAlertOpen} onOpenChange={setIsLeaveGroupAlertOpen}>
+      <AlertDialog
+        open={isLeaveGroupAlertOpen}
+        onOpenChange={setIsLeaveGroupAlertOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Leave Group?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to leave "{selectedConversation?.name}"? You will no longer be able to send or receive messages in this group.
+              Are you sure you want to leave "{selectedConversation?.name}"? You
+              will no longer be able to send or receive messages in this group.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -2140,11 +2230,15 @@ export default function ChatLayout({ session }) {
           onClose={closeContextMenu}
           onReaction={(emoji) => handleReaction(contextMenu.message._id, emoji)}
           onReply={() => handleReplyToMessage(contextMenu.message)}
-          onInfo={selectedConversation.type === 'group' ? () => {
-            setSelectedMessageForInfo(contextMenu.message);
-            setIsMessageInfoOpen(true);
-            closeContextMenu();
-          } : undefined}
+          onInfo={
+            selectedConversation.type === "group"
+              ? () => {
+                  setSelectedMessageForInfo(contextMenu.message);
+                  setIsMessageInfoOpen(true);
+                  closeContextMenu();
+                }
+              : undefined
+          }
           onEdit={() => handleEditMessage(contextMenu.message)}
           onDelete={() => handleDeleteMessage(contextMenu.message)}
           isOwnMessage={contextMenu.isOwnMessage}
